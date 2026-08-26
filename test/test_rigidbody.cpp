@@ -1489,9 +1489,12 @@ TEST(CoM, zeroMomentPoint) {
       expectedModel, Q, Qdot, Qddot, &expectedZeroMomentPoint, normal, point);
 
   for (size_t i = 0; i < 3; ++i) {
+    SCALAR_TO_DOUBLE(zeroMomentPointValue, zeroMomentPoint(i, 0));
+    SCALAR_TO_DOUBLE(
+        expectedZeroMomentPointValue, expectedZeroMomentPoint(i, 0));
     EXPECT_NEAR(
-        static_cast<double>(zeroMomentPoint(i, 0)),
-        static_cast<double>(expectedZeroMomentPoint(i, 0)),
+        zeroMomentPointValue,
+        expectedZeroMomentPointValue,
         requiredPrecision);
   }
 
@@ -1499,29 +1502,28 @@ TEST(CoM, zeroMomentPoint) {
   utils::Vector3d shiftedZeroMomentPoint(
       model.CalcZeroMomentPoint(Q, Qdot, Qddot, normal, shiftedPoint));
 
+  SCALAR_TO_DOUBLE(
+      shiftedPlaneDistance,
+      (shiftedZeroMomentPoint - shiftedPoint).dot(normal));
+  SCALAR_TO_DOUBLE(shiftedZeroMomentPointX, shiftedZeroMomentPoint(0, 0));
+  SCALAR_TO_DOUBLE(zeroMomentPointX, zeroMomentPoint(0, 0));
+  SCALAR_TO_DOUBLE(shiftedZeroMomentPointY, shiftedZeroMomentPoint(1, 0));
+  SCALAR_TO_DOUBLE(zeroMomentPointY, zeroMomentPoint(1, 0));
+  EXPECT_NEAR(shiftedPlaneDistance, 0., requiredPrecision);
   EXPECT_NEAR(
-      static_cast<double>((shiftedZeroMomentPoint - shiftedPoint).dot(normal)),
-      0.,
-      requiredPrecision);
+      shiftedZeroMomentPointX, zeroMomentPointX, requiredPrecision);
   EXPECT_NEAR(
-      static_cast<double>(shiftedZeroMomentPoint(0, 0)),
-      static_cast<double>(zeroMomentPoint(0, 0)),
-      requiredPrecision);
-  EXPECT_NEAR(
-      static_cast<double>(shiftedZeroMomentPoint(1, 0)),
-      static_cast<double>(zeroMomentPoint(1, 0)),
-      requiredPrecision);
+      shiftedZeroMomentPointY, zeroMomentPointY, requiredPrecision);
 
   utils::Vector3d sagittalNormal(0, 1, 0);
   utils::Vector3d sagittalPoint(0, 0.2, 0);
   utils::Vector3d sagittalZeroMomentPoint(model.CalcZeroMomentPoint(
       Q, Qdot, Qddot, sagittalNormal, sagittalPoint));
 
-  EXPECT_NEAR(
-      static_cast<double>(
-          (sagittalZeroMomentPoint - sagittalPoint).dot(sagittalNormal)),
-      0.,
-      requiredPrecision);
+  SCALAR_TO_DOUBLE(
+      sagittalPlaneDistance,
+      (sagittalZeroMomentPoint - sagittalPoint).dot(sagittalNormal));
+  EXPECT_NEAR(sagittalPlaneDistance, 0., requiredPrecision);
 }
 
 TEST(Segment, copy) {
