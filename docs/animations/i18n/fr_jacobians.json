@@ -1,0 +1,11 @@
+{
+  "Marker Jacobians": "Jacobiennes de marqueurs",
+  "One marker of the arm at t = {0} s.": "Un marqueur du bras à t = {0} s.",
+  "Finite differences": "Différences finies",
+  "Speed of the marker, up to {0} m/s.": "Vitesse du marqueur, jusqu'à {0} m/s.",
+  "Difference, at most {0} m/s.": "Écart, au plus {0} m/s.",
+  "Synthetic trajectory": "Trajectoire synthétique",
+  "biorbd code": "Code biorbd",
+  "The Jacobian maps joint velocities to marker velocity.": "La jacobienne relie vitesses articulaires et vitesse du marqueur.",
+  "Multiplying by the Jacobian matches the finite differences.": "Le produit par la jacobienne concorde avec les différences finies."
+}

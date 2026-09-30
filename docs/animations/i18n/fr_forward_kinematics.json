@@ -1,0 +1,14 @@
+{
+  "Forward kinematics": "Cinématique directe",
+  "From joint angles q to positions in the world": "Des angles articulaires q aux positions dans le monde",
+  "Each frame sits on its parent.": "Chaque repère suit son parent.",
+  "Foot frame origin:": "Origine du repère du pied :",
+  "Marker in the foot frame:": "Marqueur dans le repère du pied :",
+  "Marker in the world:": "Marqueur dans le monde :",
+  "Hip, knee, ankle angles:": "Angles hanche, genou, cheville :",
+  "{0}, {1}, {2} rad": "{0}, {1}, {2} rad",
+  "Faded: previous pose.": "Estompée : posture précédente.",
+  "Change of the marker position:": "Déplacement du marqueur :",
+  "When q changes, every frame moves and biorbd updates the marker.": "Quand q change, chaque repère bouge et biorbd met à jour le marqueur.",
+  "biorbd code": "Code biorbd"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "15",
+  "slug": "ik-by-hand",
+  "scene": "AnimIkByHand",
+  "level": 2,
+  "section": {"en": "Inverse kinematics", "fr": "Cinématique inverse"},
+  "title": {"en": "Inverse kinematics by hand", "fr": "La cinématique inverse à la main"},
+  "description": {
+    "en": "A hand-written Gauss-Newton loop recovers the joint angles of a two-degree-of-freedom arm from noisy synthetic markers, using the marker Jacobian of biorbd.",
+    "fr": "Une boucle de Gauss-Newton écrite à la main retrouve les angles articulaires d'un bras à deux degrés de liberté à partir de marqueurs synthétiques bruités, avec la jacobienne des marqueurs de biorbd."
+  },
+  "notes": {
+    "en": "The motion and the noise are synthetic, so the true q is known and the reconstruction error can be measured. For real data use the InverseKinematics class or the Kalman filter.",
+    "fr": "Le mouvement et le bruit sont synthétiques, donc le vrai q est connu et l'erreur de reconstruction peut être mesurée. Pour des données réelles, utilisez la classe InverseKinematics ou le filtre de Kalman."
+  },
+  "links": [
+    {"label": {"en": "Marker world position and Jacobian", "fr": "Position monde et jacobienne d'un marqueur"}, "path": "binding/python3/wrapper/marker.py", "lines": [172, 222]},
+    {"label": {"en": "Forward kinematics example", "fr": "Exemple de cinématique directe"}, "path": "examples/python3/forward_kinematics.py", "lines": [25, 43]},
+    {"label": {"en": "InverseKinematics.solve", "fr": "InverseKinematics.solve"}, "path": "binding/python3/rigid_body.py", "lines": [325, 393]},
+    {"label": {"en": "Inverse kinematics test", "fr": "Test de cinématique inverse"}, "path": "test/binding/python3/test_inverse_kinematics.py", "lines": [29, 53]}
+  ]
+}

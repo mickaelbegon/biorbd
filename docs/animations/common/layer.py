@@ -76,8 +76,6 @@ def _patch_text_class(cls) -> None:
         big = font_size < BIG_BELOW and not sized_by_box
         if big:
             kwargs["font_size"] = font_size * BIG_FACTOR
-            if kwargs.get("line_spacing", -1) > 0:
-                kwargs["line_spacing"] *= BIG_FACTOR
         # Pango wraps lines at config.pixel_width: lift the limit while the text is built
         saved_width = config.pixel_width
         config.pixel_width = 10**6

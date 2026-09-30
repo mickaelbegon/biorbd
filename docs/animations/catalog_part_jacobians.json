@@ -1,0 +1,19 @@
+{
+  "id": "05", "slug": "jacobians", "scene": "AnimJacobians", "level": 2,
+  "section": {"en": "Kinematics", "fr": "Cinématique"},
+  "title": {"en": "Marker Jacobians", "fr": "Jacobiennes de marqueurs"},
+  "description": {
+    "en": "The Jacobian of a marker maps generalized velocities to the marker velocity in the world frame, v = J(q) qdot. The video shows the small matrix of a forearm marker of the arm model and checks the product against finite differences of marker positions along a short trajectory.",
+    "fr": "La jacobienne d'un marqueur relie les vitesses généralisées à la vitesse du marqueur dans le repère monde, v = J(q) qdot. La vidéo montre la petite matrice d'un marqueur de l'avant-bras du modèle de bras et vérifie le produit par des différences finies des positions du marqueur le long d'une courte trajectoire."
+  },
+  "notes": {
+    "en": "The trajectory is synthetic (sinusoids on the two joints); the Jacobian and the marker positions are biorbd outputs. Central differences give a difference of about 0.1 % of the peak speed.",
+    "fr": "La trajectoire est synthétique (sinusoïdes sur les deux articulations) ; la jacobienne et les positions du marqueur sont calculées par biorbd. Les différences centrées donnent un écart d'environ 0,1 % de la vitesse maximale."
+  },
+  "links": [
+    {"label": {"en": "Python wrapper: marker Jacobian", "fr": "Interface Python : jacobienne d'un marqueur"}, "path": "binding/python3/wrapper/marker.py", "lines": [172, 222]},
+    {"label": {"en": "C++ declaration of markersJacobian", "fr": "Déclaration C++ de markersJacobian"}, "path": "include/RigidBody/Markers.h", "lines": [554, 575]},
+    {"label": {"en": "Test of the marker Jacobian", "fr": "Test de la jacobienne d'un marqueur"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_markers.py", "lines": [84, 103]},
+    {"label": {"en": "Example: markers by forward kinematics", "fr": "Exemple : marqueurs par cinématique directe"}, "path": "examples/python3/forward_kinematics.py", "lines": [39, 44]}
+  ]
+}

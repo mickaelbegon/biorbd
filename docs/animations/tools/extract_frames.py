@@ -10,6 +10,7 @@ from pathlib import Path
 import av
 
 CARD_SECONDS = 4.5
+FADE_SECONDS = 0.5  # fade-out of the content before the card
 
 
 def main(video: Path, out_dir: Path) -> list[Path]:
@@ -21,7 +22,7 @@ def main(video: Path, out_dir: Path) -> list[Path]:
             "t01s": 1.0,
             "p35": 0.35 * duration,
             "p65": 0.65 * duration,
-            "before_card": duration - CARD_SECONDS - 0.3,
+            "before_card": duration - CARD_SECONDS - FADE_SECONDS - 0.5,  # inside the 2.5 s final hold
             "card_mid": duration - CARD_SECONDS / 2,
         }
         frames = []
