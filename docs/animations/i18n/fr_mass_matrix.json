@@ -1,0 +1,16 @@
+{
+  "Mass matrix": "Matrice de masse",
+  "It is symmetric, positive definite and depends on q.": "Elle est symétrique, définie positive et dépend de q.",
+  "Pose A: shoulder and elbow angles {0}, {1} rad.": "Posture A : angles de l'épaule et du coude {0}, {1} rad.",
+  "Pose B: shoulder and elbow angles {0}, {1} rad.": "Posture B : angles de l'épaule et du coude {0}, {1} rad.",
+  "Pose A": "Posture A",
+  "Pose B": "Posture B",
+  "Symmetry error: {0}": "Erreur de symétrie : {0}",
+  "Smallest eigenvalue: {0} (positive).": "Plus petite valeur propre : {0} (positive).",
+  "Smallest eigenvalue at B: {0}, still above zero.": "Plus petite valeur propre en B : {0}, toujours supérieure à zéro.",
+  "Inertial part of the joint torques: M(q) times the accelerations.": "Part inertielle des couples articulaires : M(q) fois les accélérations.",
+  "Change from A to B": "Variation de A à B",
+  "Faded: previous pose.": "Estompée : posture précédente.",
+  "The same joint is heavier to accelerate in one posture than in another.": "Une même articulation est plus difficile à accélérer dans une posture que dans une autre.",
+  "biorbd code": "Code biorbd"
+}

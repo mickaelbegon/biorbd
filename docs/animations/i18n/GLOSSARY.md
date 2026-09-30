@@ -28,3 +28,7 @@ Use these terms in every `fr_<topic>.json`. Code, function names and paths are n
 | energy conservation | conservation de l'énergie |
 | synthetic data | données synthétiques |
 | Go further | Pour aller plus loin |
+| difference (between two quantities) | différence |
+| error (against a known truth) | erreur |
+| posture / pose | posture |
+| hand-written code | code écrit à la main |

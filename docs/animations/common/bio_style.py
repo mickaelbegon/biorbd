@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-from manim import DOWN, LEFT, ORIGIN, RIGHT, UP, RoundedRectangle, Text, VGroup, config
+from manim import DOWN, LEFT, ORIGIN, RIGHT, UP, Rectangle, RoundedRectangle, Text, VGroup, config
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -66,10 +66,21 @@ def code_panel(caption: str, lines: list[str], font_size: int = 22) -> VGroup:
     The code shown must be the code that runs (see STANDARD.md, rule D5).
     """
     cap = Text(caption, font_size=26, color=C_MUTED)
-    code_lines = VGroup(
-        *[Text(line if line else " ", font=CODE_FONT, font_size=font_size, color=C_CODE_TEXT) for line in lines]
-    )
+    # Text drops leading spaces: rebuild the indentation by shifting each line by its indent in characters
+    char_width = Text("M" * 20, font=CODE_FONT, font_size=font_size).width / 20
+    rows = []
+    indents = []
+    for line in lines:
+        stripped = line.strip()
+        indents.append(len(line) - len(line.lstrip(" ")) if stripped else 0)
+        if stripped:
+            rows.append(Text(stripped, font=CODE_FONT, font_size=font_size, color=C_CODE_TEXT))
+        else:  # blank line: an invisible spacer keeps the row index and the spacing
+            rows.append(Rectangle(width=0.01, height=0.15, stroke_width=0, fill_opacity=0))
+    code_lines = VGroup(*rows)
     code_lines.arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+    for row, indent in zip(rows, indents):
+        row.shift(RIGHT * indent * char_width)
     box = RoundedRectangle(
         corner_radius=0.12,
         width=max(code_lines.width + 0.5, CODE_PANEL_WIDTH),

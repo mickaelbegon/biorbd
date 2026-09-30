@@ -53,7 +53,7 @@ class AnimJacobians(Scene):
         d = S.load_npz(f"{TOPIC}_main.npz")
 
         # A1
-        head = S.title_block("Marker Jacobians", "The Jacobian maps joint velocities to marker velocity.")
+        head = S.title_block("Marker Jacobians", "From joint velocities to marker velocity")
         self.play(Write(head))
 
         # Stage 1 (point 1): the small matrix of one marker, J times qdot
@@ -110,8 +110,7 @@ class AnimJacobians(Scene):
         title_top.next_to(axes, UP, buff=0.15).align_to(axes, LEFT)
         title_diff = Text(f"Difference, at most {d_max:.4f} m/s.", font_size=22, color=S.C_DIFF)
         title_diff.next_to(axes_d, UP, buff=0.1).align_to(axes_d, LEFT)
-        synth = Text("Synthetic trajectory", font_size=22, color=S.C_SYNTH)
-        synth.next_to(axes_d, DOWN, buff=0.12).align_to(axes_d, LEFT)
+        synth = S.synthetic_tag()
 
         def line(*a, **k):
             return axes.plot_line_graph(*a, add_vertex_dots=False, **k)["line_graph"]

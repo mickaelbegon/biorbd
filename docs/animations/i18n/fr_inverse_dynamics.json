@@ -1,0 +1,11 @@
+{
+  "Inverse dynamics": "Dynamique inverse",
+  "The torques that produce a motion.": "Les couples qui produisent un mouvement.",
+  "Arm model, motion at t = {0} s.": "Modèle de bras, mouvement à t = {0} s.",
+  "All torques are in N·m.": "Tous les couples sont en N·m.",
+  "Torques of the two joints, up to {0} N·m.": "Couples des deux articulations, jusqu'à {0} N·m.",
+  "Difference, at most {0} N·m.": "Écart, au plus {0} N·m.",
+  "Synthetic data": "Données synthétiques",
+  "biorbd code": "Code biorbd",
+  "The torques equal the mass matrix times the acceleration plus the nonlinear effects.": "Les couples valent la matrice de masse fois l'accélération plus les effets non linéaires."
+}

@@ -114,10 +114,10 @@ class AnimForwardKinematics(Scene):
             to_screen(marker_b), RIGHT, buff=0.15
         )
         q_text = ", ".join(f"{value:.1f}" for value in q_leg)
-        text_5 = VGroup(line("Hip, knee, ankle angles:", Y1, S.C_TEXT), line(f"{q_text} rad", Y1 - 0.42, S.C_TEXT))
+        text_5 = VGroup(line("Hip, knee, ankle angles:", Y1, S.C_TEXT), line(f"{q_text} rad", Y1 - 0.42, S.C_DATA))
         new_y, new_z = yz(marker_b)
         value_6 = line(f"y = {new_y} m, z = {new_z} m", Y2 - 0.42, S.C_MODEL)
-        legend = Text("Faded: previous pose.", font_size=20, color=S.C_MUTED)
+        legend = Text("The faded drawing is the previous pose.", font_size=20, color=S.C_MUTED)
         legend.to_corner(DOWN + LEFT, buff=0.35).shift(UP * 0.7)
         panel_b = S.code_panel("biorbd code", block_b)
         self.play(
@@ -135,11 +135,11 @@ class AnimForwardKinematics(Scene):
         # difference axis (A6)
         scale = 17.0  # screen units per metre on the small axis
         x0 = COLUMN_X + 0.4
-        caption = line("Change of the marker position:", -0.6, S.C_MUTED)
-        axis = Line([x0, -0.95, 0], [x0, -2.35, 0], color=S.C_MUTED, stroke_width=2)
+        caption = line("Change of the marker position:", -0.8, S.C_MUTED)
+        axis = Line([x0, -1.1, 0], [x0, -2.45, 0], color=S.C_MUTED, stroke_width=2)
         rows = VGroup(axis)
         for row, (name, value) in enumerate((("y", diff[1]), ("z", diff[2]))):
-            y = -1.3 - 0.7 * row
+            y = -1.42 - 0.62 * row
             bar = Rectangle(width=float(value) * scale, height=0.32, color=S.C_DIFF, fill_opacity=0.9, stroke_width=0)
             bar.move_to([x0 + bar.width / 2, y, 0])
             axis_name = Text(name, font_size=TEXT_SIZE, color=S.C_DIFF).next_to(axis, LEFT, buff=0.1).set_y(y)

@@ -33,3 +33,7 @@ Point 2: the loop on 101 frames, compared with the known true q (ghost = one ste
 - black -t py311 -l120 on both .py files; 480p15 and 1080p30 renders EN+FR with --strict: no audit finding, no missing key;
   duration 37.9 s (EN) / 40.0 s (FR) = about 19.5 s native content + 2.5 s hold + 4.5 s card.
 - Frames looked at (EN and FR, 1080p30): 1 s, 35 %, 65 %, before the card, middle of the card; nothing overlaps the logo.
+
+## Review pass (consistency)
+- Code panel at 16 pt and shifted so its right edge keeps a margin to the frame edge; degree sign on the top value of the difference axis (as in kalman-filter); closing-step sentences left-aligned at x = -6.8 and allowed 7.4 units of width.
+- Stress test (French +20 %, scratch runner, 480p15): audit clean; sentences shrink but do not collide.

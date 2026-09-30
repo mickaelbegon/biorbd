@@ -2,6 +2,153 @@
   "schema": 1,
   "scenes": [
     {
+      "id": "01",
+      "slug": "biomod-anatomy",
+      "scene": "AnimBiomodAnatomy",
+      "level": 1,
+      "section": {
+        "en": "Models",
+        "fr": "Modèles"
+      },
+      "title": {
+        "en": "Anatomy of a .bioMod file",
+        "fr": "Anatomie d'un fichier .bioMod"
+      },
+      "description": {
+        "en": "A .bioMod file is plain text: segment tags give the coordinates q, the mass and the centre of mass, marker tags give points fixed in a segment, and biorbd reads them back.",
+        "fr": "Un fichier .bioMod est du texte brut : les balises segment donnent les coordonnées q, la masse et le centre de masse, les balises marker donnent des points fixes dans un segment, et biorbd les relit."
+      },
+      "notes": {
+        "en": "Excerpts are real lines of examples/pyomecaman.bioMod (Pelvis segment and marker pelv1). Values come from a real biorbd 1.12.3 run.",
+        "fr": "Les extraits sont de vraies lignes de examples/pyomecaman.bioMod (segment Pelvis et marqueur pelv1). Les valeurs viennent d'un vrai calcul biorbd 1.12.3."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "README: segment tags",
+            "fr": "README : balises d'un segment"
+          },
+          "path": "README.md",
+          "lines": [
+            452,
+            494
+          ]
+        },
+        {
+          "label": {
+            "en": "README: marker tag",
+            "fr": "README : balise marker"
+          },
+          "path": "README.md",
+          "lines": [
+            523,
+            539
+          ]
+        },
+        {
+          "label": {
+            "en": "Model used in the video",
+            "fr": "Modèle utilisé dans la vidéo"
+          },
+          "path": "examples/pyomecaman.bioMod",
+          "lines": [
+            1,
+            41
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ reader: translations and rotations",
+            "fr": "Lecteur C++ : translations et rotations"
+          },
+          "path": "src/ModelReader.cpp",
+          "lines": [
+            160,
+            180
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ reader: marker",
+            "fr": "Lecteur C++ : marqueur"
+          },
+          "path": "src/ModelReader.cpp",
+          "lines": [
+            410,
+            438
+          ]
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "slug": "model-loading",
+      "scene": "AnimModelLoading",
+      "level": 1,
+      "section": {
+        "en": "Models",
+        "fr": "Modèles"
+      },
+      "title": {
+        "en": "Loading a model",
+        "fr": "Charger un modèle"
+      },
+      "description": {
+        "en": "biorbd.Biorbd(path) reads a .bioMod file and returns a model object whose degrees of freedom, segments, markers and muscles can be listed.",
+        "fr": "biorbd.Biorbd(chemin) lit un fichier .bioMod et renvoie un objet modèle dont on peut lister les degrés de liberté, les segments, les marqueurs et les muscles."
+      },
+      "notes": {
+        "en": "Model examples/arm26.bioMod: 2 degrees of freedom, 11 segments, 5 markers, 6 muscles, read from a real biorbd 1.12.3 run. The path must be a str, not a Path.",
+        "fr": "Modèle examples/arm26.bioMod : 2 degrés de liberté, 11 segments, 5 marqueurs, 6 muscles, lus dans un vrai calcul biorbd 1.12.3. Le chemin doit être un str, pas un Path."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Example: muscles of the arm26 model",
+            "fr": "Exemple : muscles du modèle arm26"
+          },
+          "path": "examples/python3/forward_dynamics_from_muscles.py",
+          "lines": [
+            19,
+            29
+          ]
+        },
+        {
+          "label": {
+            "en": "Model wrapper: constructor",
+            "fr": "Wrapper du modèle : constructeur"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            12,
+            15
+          ]
+        },
+        {
+          "label": {
+            "en": "Model wrapper: segments, markers, dof names, nb_q",
+            "fr": "Wrapper du modèle : segments, marqueurs, noms des ddl, nb_q"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            149,
+            202
+          ]
+        },
+        {
+          "label": {
+            "en": "The arm26 model file",
+            "fr": "Le fichier du modèle arm26"
+          },
+          "path": "examples/arm26.bioMod",
+          "lines": [
+            1,
+            40
+          ]
+        }
+      ]
+    },
+    {
       "id": "03",
       "slug": "forward-kinematics",
       "scene": "AnimForwardKinematics",
@@ -65,6 +212,85 @@
           "lines": [
             363,
             377
+          ]
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "slug": "rotations",
+      "scene": "AnimRotations",
+      "level": 2,
+      "section": {
+        "en": "Kinematics",
+        "fr": "Cinématique"
+      },
+      "title": {
+        "en": "Rotations",
+        "fr": "Rotations"
+      },
+      "description": {
+        "en": "The same three Euler angles give different rotation matrices in the xyz and zyx sequences; biorbd converts between angles, matrices and quaternions.",
+        "fr": "Les trois mêmes angles d'Euler donnent des matrices de rotation différentes dans les séquences xyz et zyx ; biorbd convertit entre angles, matrices et quaternions."
+      },
+      "notes": {
+        "en": "Angles 0.5, 0.3, 0.8 rad. Numbers come from a real biorbd 1.12.3 run (Rotation and Quaternion classes).",
+        "fr": "Angles 0,5, 0,3, 0,8 rad. Les nombres viennent d'un vrai calcul biorbd 1.12.3 (classes Rotation et Quaternion)."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Euler angles to rotation matrix",
+            "fr": "Angles d'Euler vers matrice de rotation"
+          },
+          "path": "include/Utils/Rotation.h",
+          "lines": [
+            115,
+            123
+          ]
+        },
+        {
+          "label": {
+            "en": "Rotation matrix to Euler angles",
+            "fr": "Matrice de rotation vers angles d'Euler"
+          },
+          "path": "include/Utils/Rotation.h",
+          "lines": [
+            168,
+            175
+          ]
+        },
+        {
+          "label": {
+            "en": "Quaternion from a rotation matrix",
+            "fr": "Quaternion depuis une matrice de rotation"
+          },
+          "path": "include/Utils/Quaternion.h",
+          "lines": [
+            204,
+            211
+          ]
+        },
+        {
+          "label": {
+            "en": "Segment frame as Euler angles",
+            "fr": "Repère de segment en angles d'Euler"
+          },
+          "path": "binding/python3/wrapper/segment_frame.py",
+          "lines": [
+            160,
+            177
+          ]
+        },
+        {
+          "label": {
+            "en": "Example: frames of reference",
+            "fr": "Exemple : repères de référence"
+          },
+          "path": "examples/python3/manipulating_frames_of_reference.py",
+          "lines": [
+            36,
+            41
           ]
         }
       ]
@@ -138,6 +364,640 @@
       ]
     },
     {
+      "id": "06",
+      "slug": "center-of-mass",
+      "scene": "AnimCenterOfMass",
+      "level": 1,
+      "section": {
+        "en": "Mass and inertia",
+        "fr": "Masse et inertie"
+      },
+      "title": {
+        "en": "Centre of mass",
+        "fr": "Centre de masse"
+      },
+      "description": {
+        "en": "The centre of mass of the whole body is the mass-weighted average of the segment centres of mass, and it moves when the posture q changes.",
+        "fr": "Le centre de masse du corps entier est la moyenne pondérée par les masses des centres de masse des segments, et il se déplace quand la posture q change."
+      },
+      "notes": {
+        "en": "Model pyomecaman.bioMod, two postures. The average recomputed from the segment frames matches model.center_of_mass(q). Numbers come from a real biorbd 1.12.3 run.",
+        "fr": "Modèle pyomecaman.bioMod, deux postures. La moyenne recalculée à partir des repères des segments correspond à model.center_of_mass(q). Les nombres viennent d'un vrai calcul biorbd 1.12.3."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Example: centre of mass of a model",
+            "fr": "Exemple : centre de masse d'un modèle"
+          },
+          "path": "examples/python3/manipulation_model.py",
+          "lines": [
+            21,
+            22
+          ]
+        },
+        {
+          "label": {
+            "en": "Model mass and centre of mass",
+            "fr": "Masse et centre de masse du modèle"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            62,
+            72
+          ]
+        },
+        {
+          "label": {
+            "en": "Segment mass, centre of mass and inertia",
+            "fr": "Masse, centre de masse et inertie d'un segment"
+          },
+          "path": "binding/python3/wrapper/segment.py",
+          "lines": [
+            51,
+            107
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ centre of mass",
+            "fr": "Centre de masse en C++"
+          },
+          "path": "include/RigidBody/Joints.h",
+          "lines": [
+            675,
+            680
+          ]
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "slug": "mass-matrix",
+      "scene": "AnimMassMatrix",
+      "level": 2,
+      "section": {
+        "en": "Dynamics",
+        "fr": "Dynamique"
+      },
+      "title": {
+        "en": "The mass matrix",
+        "fr": "La matrice de masse"
+      },
+      "description": {
+        "en": "The joint-space mass matrix M(q) gives the inertial part of the joint torques, M(q) times the accelerations. It is symmetric and positive definite, and it depends on the posture. The video computes M for the arm26 model at two elbow angles, checks the symmetry and the smallest eigenvalue, and shows how the matrix changes between the two postures.",
+        "fr": "La matrice de masse M(q) dans l'espace articulaire donne la part inertielle des couples articulaires, M(q) fois les accélérations. Elle est symétrique, définie positive et dépend de la posture. La vidéo calcule M pour le modèle arm26 à deux angles du coude, vérifie la symétrie et la plus petite valeur propre, puis montre comment la matrice change d'une posture à l'autre."
+      },
+      "notes": {
+        "en": "Both postures are chosen by hand; M, the symmetry error and the eigenvalues are computed with biorbd and numpy. The diagonal term of the forearm does not change with the elbow angle, the coupling term and the shoulder term do.",
+        "fr": "Les deux postures sont choisies à la main ; M, l'erreur de symétrie et les valeurs propres sont calculées avec biorbd et numpy. Le terme diagonal de l'avant-bras ne change pas avec l'angle du coude, le terme de couplage et le terme de l'épaule changent."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Python wrapper: mass_matrix",
+            "fr": "Interface Python : mass_matrix"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            73,
+            99
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ declaration of massMatrix",
+            "fr": "Déclaration C++ de massMatrix"
+          },
+          "path": "include/RigidBody/Joints.h",
+          "lines": [
+            927,
+            947
+          ]
+        },
+        {
+          "label": {
+            "en": "Test of the mass matrix",
+            "fr": "Test de la matrice de masse"
+          },
+          "path": "test/binding/python3/tests_wrapper/test_wrapper_model.py",
+          "lines": [
+            233,
+            241
+          ]
+        },
+        {
+          "label": {
+            "en": "Model used: arm26",
+            "fr": "Modèle utilisé : arm26"
+          },
+          "path": "examples/arm26.bioMod",
+          "lines": [
+            74,
+            89
+          ]
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "slug": "nonlinear-effects",
+      "scene": "AnimNonlinearEffects",
+      "level": 2,
+      "section": {
+        "en": "Dynamics",
+        "fr": "Dynamique"
+      },
+      "title": {
+        "en": "Nonlinear effects",
+        "fr": "Effets non linéaires"
+      },
+      "description": {
+        "en": "model.non_linear_effect(q, qdot) returns the generalized forces that cancel gravity and the velocity-dependent (Coriolis and centrifugal) terms. At zero velocity it is pure gravity; the velocity part grows with the square of the velocity. The video uses the pyomecaman model in a hand-chosen posture: the vertical pelvis force equals mass times 9.81, and doubling qdot multiplies the velocity part by exactly four. biorbd has no separate Coriolis function.",
+        "fr": "model.non_linear_effect(q, qdot) renvoie les forces généralisées qui annulent la gravité et les termes dépendant de la vitesse (Coriolis et centrifuge). À vitesse nulle, c'est la gravité seule ; la partie dépendant de la vitesse croît avec le carré de la vitesse. La vidéo utilise le modèle pyomecaman dans une posture choisie à la main : la force verticale du bassin vaut la masse fois 9,81, et doubler qdot multiplie exactement par quatre la partie dépendant de la vitesse. biorbd n'a pas de fonction Coriolis séparée."
+      },
+      "notes": {
+        "en": "The posture and velocities are chosen by hand (not measured); the vectors are biorbd outputs. The ratio is 4 to about 1e-13 on all 13 degrees of freedom. The pelvis joint dampings of the bioMod are not part of non_linear_effect, but inverse dynamics adds them.",
+        "fr": "La posture et les vitesses sont choisies à la main (non mesurées) ; les vecteurs sont calculés par biorbd. Le rapport vaut 4 à environ 1e-13 près sur les 13 degrés de liberté. Les amortissements articulaires du bassin du bioMod ne font pas partie de non_linear_effect, mais la dynamique inverse les ajoute."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Python wrapper: non_linear_effect",
+            "fr": "Interface Python : non_linear_effect"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            101,
+            124
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ declaration of NonLinearEffect",
+            "fr": "Déclaration C++ de NonLinearEffect"
+          },
+          "path": "include/RigidBody/Joints.h",
+          "lines": [
+            1148,
+            1166
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ implementation of NonLinearEffect",
+            "fr": "Implémentation C++ de NonLinearEffect"
+          },
+          "path": "src/RigidBody/Joints.cpp",
+          "lines": [
+            1543,
+            1563
+          ]
+        },
+        {
+          "label": {
+            "en": "Test of non_linear_effect",
+            "fr": "Test de non_linear_effect"
+          },
+          "path": "test/binding/python3/tests_wrapper/test_wrapper_model.py",
+          "lines": [
+            452,
+            457
+          ]
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "slug": "inverse-dynamics",
+      "scene": "AnimInverseDynamics",
+      "level": 2,
+      "section": {
+        "en": "Dynamics",
+        "fr": "Dynamique"
+      },
+      "title": {
+        "en": "Inverse dynamics",
+        "fr": "Dynamique inverse"
+      },
+      "description": {
+        "en": "Inverse dynamics gives the joint torques that produce a given motion (q, qdot, qddot). The video computes them with model.inverse_dynamics on the arm model and checks that they equal M(q) qddot + N(q, qdot), using the mass matrix and the nonlinear effects of biorbd.",
+        "fr": "La dynamique inverse donne les couples articulaires qui produisent un mouvement donné (q, qdot, qddot). La vidéo les calcule avec model.inverse_dynamics sur le modèle de bras et vérifie qu'ils valent M(q) qddot + N(q, qdot), avec la matrice de masse et les effets non linéaires de biorbd."
+      },
+      "notes": {
+        "en": "The motion is synthetic (sinusoids on the two joints, analytic derivatives); the torques, the mass matrix and the nonlinear effects are biorbd outputs. The two computations agree to about 1e-15 N.m, i.e. machine precision.",
+        "fr": "Le mouvement est synthétique (sinusoïdes sur les deux articulations, dérivées analytiques) ; les couples, la matrice de masse et les effets non linéaires sont calculés par biorbd. Les deux calculs concordent à environ 1e-15 N.m, soit la précision machine."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Example: inverse dynamics",
+            "fr": "Exemple : dynamique inverse"
+          },
+          "path": "examples/python3/inverse_dynamics.py",
+          "lines": [
+            17,
+            30
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: mass matrix",
+            "fr": "Interface Python : matrice de masse"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            73,
+            99
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: nonlinear effects",
+            "fr": "Interface Python : effets non linéaires"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            101,
+            124
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: inverse dynamics",
+            "fr": "Interface Python : dynamique inverse"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            355,
+            383
+          ]
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "slug": "forward-dynamics",
+      "scene": "AnimForwardDynamics",
+      "level": 2,
+      "section": {
+        "en": "Dynamics",
+        "fr": "Dynamique"
+      },
+      "title": {
+        "en": "Forward dynamics and integration",
+        "fr": "Dynamique directe et intégration"
+      },
+      "description": {
+        "en": "model.forward_dynamics returns the accelerations qddot from q, qdot and tau. biorbd has no integrator in its core, so a hand-written Euler and a hand-written RK4 are compared on a passive double pendulum through the drift of its total energy.",
+        "fr": "model.forward_dynamics renvoie les accélérations qddot à partir de q, qdot et tau. biorbd n'a pas d'intégrateur dans son cœur : un Euler et un RK4 écrits à la main sont comparés sur un double pendule passif grâce à la dérive de son énergie totale."
+      },
+      "notes": {
+        "en": "The motion is simulated (released at rest, tau = 0, no damping). The energy is read with model.internal.TotalEnergy(q, qdot), which is not wrapped in Python. For real simulations use an ODE solver or a tool such as bioptim.",
+        "fr": "Le mouvement est simulé (lâché au repos, tau = 0, sans amortissement). L'énergie est lue avec model.internal.TotalEnergy(q, qdot), qui n'est pas enveloppée en Python. Pour de vraies simulations, utilisez un solveur d'EDO ou un outil comme bioptim."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Forward dynamics example",
+            "fr": "Exemple de dynamique directe"
+          },
+          "path": "examples/python3/forward_dynamics.py",
+          "lines": [
+            20,
+            32
+          ]
+        },
+        {
+          "label": {
+            "en": "Biorbd.forward_dynamics",
+            "fr": "Biorbd.forward_dynamics"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            297,
+            353
+          ]
+        },
+        {
+          "label": {
+            "en": "Energy functions (C++ header)",
+            "fr": "Fonctions d'énergie (en-tête C++)"
+          },
+          "path": "include/RigidBody/Joints.h",
+          "lines": [
+            1077,
+            1124
+          ]
+        },
+        {
+          "label": {
+            "en": "Pendulum model",
+            "fr": "Modèle de pendule"
+          },
+          "path": "test/models/pendulum.bioMod",
+          "lines": [
+            1,
+            25
+          ]
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "slug": "muscles",
+      "scene": "AnimMuscles",
+      "level": 2,
+      "section": {
+        "en": "Muscles",
+        "fr": "Muscles"
+      },
+      "title": {
+        "en": "Muscles: length, moment arm and torque",
+        "fr": "Muscles : longueur, bras de levier et couple"
+      },
+      "description": {
+        "en": "The length of a muscle depends on the joint angles, and the gradient of that length with respect to the coordinates is the length Jacobian. The joint torque produced by the muscles is minus the transposed length Jacobian times the muscle forces. The video sweeps the elbow angle of the arm model, shows the length and the moment arm of the long head of the biceps, and compares the torque returned by muscles.joint_torque with minus J transposed times F computed by hand.",
+        "fr": "La longueur d'un muscle dépend des angles articulaires, et le gradient de cette longueur par rapport aux coordonnées est la jacobienne de longueur. Le couple articulaire produit par les muscles est l'opposé de la jacobienne de longueur transposée fois les forces musculaires. La vidéo balaie l'angle du coude du modèle de bras, montre la longueur et le bras de levier du long chef du biceps, et compare le couple renvoyé par muscles.joint_torque à moins J transposée fois F calculé à la main."
+      },
+      "notes": {
+        "en": "The elbow sweep is synthetic (chosen angles); lengths, Jacobians, forces and torques are biorbd outputs. All six muscles of arm26 are set to an activation of 0.5. The numerical check with this model shows joint_torque = -J^T F to about 5e-15 N.m; the moment arm is shown as the opposite of dLength/dq.",
+        "fr": "Le balayage du coude est synthétique (angles choisis) ; longueurs, jacobiennes, forces et couples sont calculés par biorbd. Les six muscles de arm26 ont une activation de 0,5. La vérification numérique avec ce modèle donne joint_torque = -J^T F à environ 5e-15 N.m près ; le bras de levier est présenté comme l'opposé de dLongueur/dq."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Example: muscle forces and joint torque",
+            "fr": "Exemple : forces musculaires et couple articulaire"
+          },
+          "path": "examples/python3/manipulating_muscles.py",
+          "lines": [
+            26,
+            45
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: length Jacobian of a muscle",
+            "fr": "Interface Python : jacobienne de longueur d'un muscle"
+          },
+          "path": "binding/python3/wrapper/muscle.py",
+          "lines": [
+            198,
+            208
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: joint torque of the muscles",
+            "fr": "Interface Python : couple articulaire des muscles"
+          },
+          "path": "binding/python3/wrapper/muscle.py",
+          "lines": [
+            462,
+            490
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ declaration of muscularJointTorque",
+            "fr": "Déclaration C++ de muscularJointTorque"
+          },
+          "path": "include/InternalForces/Muscles/Muscles.h",
+          "lines": [
+            206,
+            220
+          ]
+        },
+        {
+          "label": {
+            "en": "Test of the muscles wrapper",
+            "fr": "Test de l'interface des muscles"
+          },
+          "path": "test/binding/python3/tests_wrapper/test_wrapper_muscles.py",
+          "lines": [
+            44,
+            47
+          ]
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "slug": "contacts",
+      "scene": "AnimContacts",
+      "level": 3,
+      "section": {
+        "en": "Contacts and external forces",
+        "fr": "Contacts et forces externes"
+      },
+      "title": {
+        "en": "Rigid contacts",
+        "fr": "Contacts rigides"
+      },
+      "description": {
+        "en": "A rigid contact declared in the bioMod file forbids the motion of its point along the chosen axes. The video runs the forward dynamics of a free cube with two contacts, first ignoring the contacts (free fall), then with them: the generalized accelerations vanish, the acceleration of the contact points is zero to numerical precision and biorbd returns the contact forces, whose vertical components add up to the weight.",
+        "fr": "Un contact rigide déclaré dans le fichier bioMod interdit le mouvement de son point selon les axes choisis. La vidéo calcule la dynamique directe d'un cube libre muni de deux contacts, d'abord en ignorant les contacts (chute libre), puis avec eux : les accélérations généralisées s'annulent, l'accélération des points de contact est nulle à la précision numérique et biorbd renvoie les forces de contact, dont les composantes verticales s'additionnent pour donner le poids."
+      },
+      "notes": {
+        "en": "Single static pose (q = 0, qdot = 0, tau = 0) of the test model cubeWithRigidContactsExternalForces.bioMod; no external force is added. The contact forces are not unique individually (two contacts constrain z), only their sum is.",
+        "fr": "Une seule pose statique (q = 0, qdot = 0, tau = 0) du modèle de test cubeWithRigidContactsExternalForces.bioMod ; aucune force externe n'est ajoutée. Les forces de contact ne sont pas uniques individuellement (deux contacts contraignent z), seule leur somme l'est."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Python wrapper: forward_dynamics with contacts",
+            "fr": "Interface Python : dynamique directe avec contacts"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            297,
+            358
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ declaration of rigidContactsAcceleration",
+            "fr": "Déclaration C++ de rigidContactsAcceleration"
+          },
+          "path": "include/RigidBody/Contacts.h",
+          "lines": [
+            288,
+            320
+          ]
+        },
+        {
+          "label": {
+            "en": "Model with two rigid contacts",
+            "fr": "Modèle avec deux contacts rigides"
+          },
+          "path": "test/models/cubeWithRigidContactsExternalForces.bioMod",
+          "lines": [
+            37,
+            47
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ test of the contact acceleration",
+            "fr": "Test C++ de l'accélération d'un contact"
+          },
+          "path": "test/test_rigidbody.cpp",
+          "lines": [
+            361,
+            378
+          ]
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "slug": "imu",
+      "scene": "AnimImu",
+      "level": 3,
+      "section": {
+        "en": "Sensors",
+        "fr": "Capteurs"
+      },
+      "title": {
+        "en": "Inertial measurement unit (IMU)",
+        "fr": "Centrale inertielle (IMU)"
+      },
+      "description": {
+        "en": "An IMU declared in the .bioMod is a frame fixed in a segment: biorbd gives its orientation in the world from q.",
+        "fr": "Une IMU déclarée dans le .bioMod est un repère fixé dans un segment : biorbd donne son orientation dans le monde à partir de q."
+      },
+      "notes": {
+        "en": "The wrapper does not expose IMUs yet, so the video uses model.internal (the SWIG biorbd.Model). IMU(q, idx) returns the segment world frame multiplied by the local rt; the generator checks this numerically.",
+        "fr": "Le wrapper n'expose pas encore les IMU : la vidéo utilise model.internal (le biorbd.Model SWIG). IMU(q, idx) renvoie le repère monde du segment multiplié par le rt local ; le générateur le vérifie numériquement."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Model with IMUs",
+            "fr": "Modèle avec IMU"
+          },
+          "path": "test/models/IMUandCustomRT/pyomecaman_withIMUs.bioMod",
+          "lines": [
+            853,
+            876
+          ]
+        },
+        {
+          "label": {
+            "en": "IMUs class (C++ header)",
+            "fr": "Classe IMUs (en-tête C++)"
+          },
+          "path": "include/RigidBody/IMUs.h",
+          "lines": [
+            98,
+            138
+          ]
+        },
+        {
+          "label": {
+            "en": "IMU at q (C++)",
+            "fr": "IMU en q (C++)"
+          },
+          "path": "src/RigidBody/IMUs.cpp",
+          "lines": [
+            87,
+            97
+          ]
+        },
+        {
+          "label": {
+            "en": "Python test of IMU",
+            "fr": "Test Python de l'IMU"
+          },
+          "path": "test/binding/python3/test_conversion.py",
+          "lines": [
+            48,
+            62
+          ]
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "slug": "ik-least-squares",
+      "scene": "AnimIkLeastSquares",
+      "level": 2,
+      "section": {
+        "en": "Inverse kinematics",
+        "fr": "Cinématique inverse"
+      },
+      "title": {
+        "en": "Inverse kinematics by least squares",
+        "fr": "La cinématique inverse par moindres carrés"
+      },
+      "description": {
+        "en": "biorbd.InverseKinematics solves each frame with a scipy least-squares solver (lm, trf or only_lm), skips markers that are NaN and, with trf, respects the joint ranges. Shown on synthetic noisy markers of a 13-DoF model, with the error measured against the known truth.",
+        "fr": "biorbd.InverseKinematics résout chaque image avec un solveur de moindres carrés de scipy (lm, trf ou only_lm), ignore les marqueurs NaN et, avec trf, respecte les amplitudes articulaires. Montré sur des marqueurs synthétiques bruités d'un modèle à 13 ddl, avec l'erreur mesurée par rapport à la vérité connue."
+      },
+      "notes": {
+        "en": "The motion, the noise and the missing marker are synthetic. The class takes a raw biorbd.Model and markers of shape (3, nb_marker, nb_frame). With method lm the bounds are applied on the first frame only; use trf to keep every frame inside the joint ranges.",
+        "fr": "Le mouvement, le bruit et le marqueur manquant sont synthétiques. La classe prend un biorbd.Model brut et des marqueurs de forme (3, nb_marker, nb_frame). Avec la méthode lm, les bornes ne sont appliquées qu'à la première image ; utilisez trf pour garder chaque image dans les amplitudes articulaires."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "InverseKinematics class",
+            "fr": "Classe InverseKinematics"
+          },
+          "path": "binding/python3/rigid_body.py",
+          "lines": [
+            154,
+            270
+          ]
+        },
+        {
+          "label": {
+            "en": "InverseKinematics.solve",
+            "fr": "InverseKinematics.solve"
+          },
+          "path": "binding/python3/rigid_body.py",
+          "lines": [
+            325,
+            394
+          ]
+        },
+        {
+          "label": {
+            "en": "Joint ranges of the model",
+            "fr": "Amplitudes articulaires du modèle"
+          },
+          "path": "binding/python3/utils.py",
+          "lines": [
+            4,
+            23
+          ]
+        },
+        {
+          "label": {
+            "en": "Inverse kinematics test",
+            "fr": "Test de cinématique inverse"
+          },
+          "path": "test/binding/python3/test_inverse_kinematics.py",
+          "lines": [
+            29,
+            55
+          ]
+        },
+        {
+          "label": {
+            "en": "Model used",
+            "fr": "Modèle utilisé"
+          },
+          "path": "examples/pyomecaman.bioMod",
+          "lines": [
+            1,
+            30
+          ]
+        }
+      ]
+    },
+    {
       "id": "15",
       "slug": "ik-by-hand",
       "scene": "AnimIkByHand",
@@ -201,6 +1061,221 @@
           "lines": [
             29,
             53
+          ]
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "slug": "kalman-filter",
+      "scene": "AnimKalmanFilter",
+      "level": 3,
+      "section": {
+        "en": "Inverse kinematics",
+        "fr": "Cinématique inverse"
+      },
+      "title": {
+        "en": "Kalman filter",
+        "fr": "Filtre de Kalman"
+      },
+      "description": {
+        "en": "The extended Kalman filter of biorbd reconstructs the joint angles frame by frame from noisy synthetic markers and is compared with solving each frame alone.",
+        "fr": "Le filtre de Kalman étendu de biorbd reconstruit les angles articulaires image par image à partir de marqueurs synthétiques bruités, et il est comparé à la résolution de chaque image seule."
+      },
+      "notes": {
+        "en": "Synthetic data with a known truth. The filter is used with the default noise and error factors, not tuned; the gain over a per-frame solution is modest here. Use the filter on real data when you also need velocities and accelerations.",
+        "fr": "Données synthétiques avec une vérité connue. Le filtre utilise les facteurs de bruit et d'erreur par défaut, sans réglage ; le gain par rapport à une résolution image par image est modeste ici. Utilisez le filtre sur des données réelles lorsque vous avez aussi besoin des vitesses et des accélérations."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "ExtendedKalmanFilterMarkers",
+            "fr": "ExtendedKalmanFilterMarkers"
+          },
+          "path": "binding/python3/wrapper/extended_kalman_filter.py",
+          "lines": [
+            22,
+            74
+          ]
+        },
+        {
+          "label": {
+            "en": "Kalman filter parameters",
+            "fr": "Paramètres du filtre de Kalman"
+          },
+          "path": "include/RigidBody/KalmanRecons.h",
+          "lines": [
+            25,
+            40
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ inverse kinematics example",
+            "fr": "Exemple C++ de cinématique inverse"
+          },
+          "path": "examples/inverseKinematicsKalmanExample.cpp",
+          "lines": [
+            21,
+            50
+          ]
+        },
+        {
+          "label": {
+            "en": "Kalman filter test",
+            "fr": "Test du filtre de Kalman"
+          },
+          "path": "test/binding/python3/tests_wrapper/test_wrapper_kalman_filter.py",
+          "lines": [
+            8,
+            32
+          ]
+        }
+      ]
+    },
+    {
+      "id": "17",
+      "slug": "static-optimization",
+      "scene": "AnimStaticOptimization",
+      "level": 3,
+      "section": {
+        "en": "Muscles",
+        "fr": "Muscles"
+      },
+      "title": {
+        "en": "Static optimization",
+        "fr": "L'optimisation statique"
+      },
+      "description": {
+        "en": "Six muscles act on two joints, so many activation sets give the same joint torque. Static optimization keeps the one with the smallest sum of squared activations, and the muscle joint torque reproduces the inverse-dynamics target.",
+        "fr": "Six muscles agissent sur deux articulations : de nombreux jeux d'activations donnent le même couple articulaire. L'optimisation statique garde celui dont la somme des activations au carré est la plus petite, et le couple musculaire reproduit la cible de dynamique inverse."
+      },
+      "notes": {
+        "en": "The motion is synthetic. The wrapper StaticOptimization.perform_frames calls run() with the default linearized option; the video uses the lower-level class with run(False), which keeps the exact muscle model (see the notes file of the video).",
+        "fr": "Le mouvement est synthétique. StaticOptimization.perform_frames du wrapper appelle run() avec l'option linéarisée par défaut ; la vidéo utilise la classe de plus bas niveau avec run(False), qui conserve le modèle musculaire exact (voir le fichier de notes de la vidéo)."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "StaticOptimization wrapper",
+            "fr": "Wrapper StaticOptimization"
+          },
+          "path": "binding/python3/wrapper/static_optimization.py",
+          "lines": [
+            16,
+            35
+          ]
+        },
+        {
+          "label": {
+            "en": "Static optimization example",
+            "fr": "Exemple d'optimisation statique"
+          },
+          "path": "examples/python3/static_optimization.py",
+          "lines": [
+            18,
+            52
+          ]
+        },
+        {
+          "label": {
+            "en": "Muscle joint torque",
+            "fr": "Couple articulaire musculaire"
+          },
+          "path": "binding/python3/wrapper/muscle.py",
+          "lines": [
+            462,
+            490
+          ]
+        },
+        {
+          "label": {
+            "en": "Static optimization test",
+            "fr": "Test d'optimisation statique"
+          },
+          "path": "test/binding/python3/tests_wrapper/test_wrapper_muscles.py",
+          "lines": [
+            133,
+            172
+          ]
+        },
+        {
+          "label": {
+            "en": "StaticOptimization::run (C++)",
+            "fr": "StaticOptimization::run (C++)"
+          },
+          "path": "src/InternalForces/Muscles/StaticOptimization.cpp",
+          "lines": [
+            191,
+            230
+          ]
+        }
+      ]
+    },
+    {
+      "id": "18",
+      "slug": "casadi-symbolic",
+      "scene": "AnimCasadiSymbolic",
+      "level": 3,
+      "section": {
+        "en": "CasADi",
+        "fr": "CasADi"
+      },
+      "title": {
+        "en": "Symbolic functions with the CasADi build",
+        "fr": "Fonctions symboliques avec la version CasADi"
+      },
+      "description": {
+        "en": "The CasADi build of biorbd (biorbd_casadi, installed separately from the default Eigen build) turns any model quantity into a symbolic CasADi function with to_casadi_func. The video builds the mass matrix of a two-link pendulum as a function of q, shows one symbolic entry, and compares its value at one pose with the mass matrix of the default build.",
+        "fr": "La version CasADi de biorbd (biorbd_casadi, installée séparément de la version Eigen par défaut) transforme toute grandeur du modèle en fonction symbolique CasADi avec to_casadi_func. La vidéo construit la matrice de masse d'un pendule à deux segments en fonction de q, montre un terme symbolique et compare sa valeur en une posture avec la matrice de masse de la version par défaut."
+      },
+      "notes": {
+        "en": "Both builds load the same small bioMod written for this video (masses 1 and 2 kg, known centres of mass and inertias). The two matrices agree to machine precision at the pose shown.",
+        "fr": "Les deux versions chargent le même petit fichier bioMod écrit pour cette vidéo (masses de 1 et 2 kg, centres de masse et inerties connus). Les deux matrices concordent à la précision machine dans la posture montrée."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "to_casadi_func (CasADi backend only)",
+            "fr": "to_casadi_func (version CasADi uniquement)"
+          },
+          "path": "binding/python3/__init__.py",
+          "lines": [
+            15,
+            49
+          ]
+        },
+        {
+          "label": {
+            "en": "Tests run with biorbd and biorbd_casadi",
+            "fr": "Tests exécutés avec biorbd et biorbd_casadi"
+          },
+          "path": "test/binding/python3/test_binder_python_rigidbody.py",
+          "lines": [
+            94,
+            120
+          ]
+        },
+        {
+          "label": {
+            "en": "Python wrapper: mass matrix",
+            "fr": "Interface Python : matrice de masse"
+          },
+          "path": "binding/python3/wrapper/biorbd_model.py",
+          "lines": [
+            73,
+            99
+          ]
+        },
+        {
+          "label": {
+            "en": "C++ declaration of massMatrix",
+            "fr": "Déclaration C++ de massMatrix"
+          },
+          "path": "include/RigidBody/Joints.h",
+          "lines": [
+            925,
+            934
           ]
         }
       ]

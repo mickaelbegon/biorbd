@@ -30,15 +30,23 @@ def to_scene(xyz) -> np.ndarray:
 ACROMION = np.zeros(3)
 
 
+def keep_right_margin(panel, limit: float = 6.7):
+    """Shift a wide code panel left so that its right edge keeps a margin to the frame edge (frame half-width 7.11)."""
+    excess = panel.get_right()[0] - limit
+    if excess > 0:
+        panel.shift(LEFT * excess)
+    return panel
+
+
 def rms_mm(errors) -> float:
     return 1000.0 * float(np.sqrt(np.mean(np.asarray(errors)[SHOW_MARKERS] ** 2)))
 
 
 def sentence(text: str, y: float = -1.75, color=S.C_TEXT) -> Text:
     out = Text(text, font_size=24, color=color)
-    if out.width > 6.2:
-        out.scale_to_fit_width(6.2)
-    return out.move_to([-3.6, y, 0])
+    if out.width > 7.4:
+        out.scale_to_fit_width(7.4)
+    return out.move_to([S.LEFT_X0, y, 0], aligned_edge=LEFT)
 
 
 class AnimIkByHand(Scene):
@@ -54,7 +62,7 @@ class AnimIkByHand(Scene):
         self.play(Write(S.title_block("Inverse kinematics by hand", "Find q from markers with Gauss-Newton")))
         tag_a = S.synthetic_tag("synthetic")
         tag_b = S.synthetic_tag("handmade").next_to(tag_a, RIGHT, buff=0.6)
-        panel = S.code_panel("biorbd code", generator_code(), font_size=18)
+        panel = keep_right_margin(S.code_panel("biorbd code", generator_code(), font_size=16))
         self.play(FadeIn(panel), FadeIn(tag_a), FadeIn(tag_b))
 
         # --- point 1: the loop on one frame ---------------------------------------------------
@@ -146,7 +154,7 @@ class AnimIkByHand(Scene):
         bot_title.align_to(bot[1], LEFT).shift(RIGHT * 2.4)
         d_max = float(diff.max())
         bot_top = (
-            Text(f"{d_max:.1f}", font_size=18, color=S.C_MUTED).next_to(bot[1], LEFT, buff=0.06).align_to(bot[1], UP)
+            Text(f"{d_max:.1f}°", font_size=18, color=S.C_MUTED).next_to(bot[1], LEFT, buff=0.06).align_to(bot[1], UP)
         )
         top_top = Text("90°", font_size=18, color=S.C_MUTED).next_to(top[1], LEFT, buff=0.06).align_to(top[1], UP)
         time_lab = Text("Time (s)", font_size=20, color=S.C_MUTED).next_to(bot[0], DOWN, buff=0.06)

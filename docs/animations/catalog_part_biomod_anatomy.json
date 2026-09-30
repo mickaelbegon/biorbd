@@ -1,0 +1,23 @@
+{
+  "id": "01",
+  "slug": "biomod-anatomy",
+  "scene": "AnimBiomodAnatomy",
+  "level": 1,
+  "section": {"en": "Models", "fr": "Modèles"},
+  "title": {"en": "Anatomy of a .bioMod file", "fr": "Anatomie d'un fichier .bioMod"},
+  "description": {
+    "en": "A .bioMod file is plain text: segment tags give the coordinates q, the mass and the centre of mass, marker tags give points fixed in a segment, and biorbd reads them back.",
+    "fr": "Un fichier .bioMod est du texte brut : les balises segment donnent les coordonnées q, la masse et le centre de masse, les balises marker donnent des points fixes dans un segment, et biorbd les relit."
+  },
+  "notes": {
+    "en": "Excerpts are real lines of examples/pyomecaman.bioMod (Pelvis segment and marker pelv1). Values come from a real biorbd 1.12.3 run.",
+    "fr": "Les extraits sont de vraies lignes de examples/pyomecaman.bioMod (segment Pelvis et marqueur pelv1). Les valeurs viennent d'un vrai calcul biorbd 1.12.3."
+  },
+  "links": [
+    {"label": {"en": "README: segment tags", "fr": "README : balises d'un segment"}, "path": "README.md", "lines": [452, 494]},
+    {"label": {"en": "README: marker tag", "fr": "README : balise marker"}, "path": "README.md", "lines": [523, 539]},
+    {"label": {"en": "Model used in the video", "fr": "Modèle utilisé dans la vidéo"}, "path": "examples/pyomecaman.bioMod", "lines": [1, 41]},
+    {"label": {"en": "C++ reader: translations and rotations", "fr": "Lecteur C++ : translations et rotations"}, "path": "src/ModelReader.cpp", "lines": [160, 180]},
+    {"label": {"en": "C++ reader: marker", "fr": "Lecteur C++ : marqueur"}, "path": "src/ModelReader.cpp", "lines": [410, 438]}
+  ]
+}

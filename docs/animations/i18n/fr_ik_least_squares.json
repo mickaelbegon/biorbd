@@ -1,0 +1,19 @@
+{
+  "Error (deg)": "Erreur (deg)",
+  "Error of this marker (mm)": "Erreur de ce marqueur (mm)",
+  "Estimated pose": "Posture estimée",
+  "Frame": "Image",
+  "Inverse kinematics in biorbd": "Cinématique inverse dans biorbd",
+  "Its error rises from {0} to {1} mm.": "Son erreur passe de {0} à {1} mm.",
+  "Least squares with the InverseKinematics class": "Moindres carrés avec la classe InverseKinematics",
+  "Noise added: {0} mm per coordinate.": "Bruit ajouté : {0} mm par coordonnée.",
+  "Noisy markers": "Marqueurs bruités",
+  "On all markers it rises from {0} to {1} mm.": "Sur tous les marqueurs, elle passe de {0} à {1} mm.",
+  "Only trf keeps every joint inside its range.": "Seul trf garde chaque articulation dans son amplitude.",
+  "Over range (deg)": "Hors amplitude (deg)",
+  "Red ring: where the model puts it": "Cercle rouge : où le modèle le place",
+  "Synthetic data": "Données synthétiques",
+  "The solver skips NaN markers, and trf also respects the joint ranges.": "Le solveur ignore les marqueurs NaN, et trf respecte aussi les amplitudes articulaires.",
+  "biorbd code": "Code biorbd",
+  "is NaN from frame {0} to {1}.": "est NaN de l'image {0} à {1}."
+}

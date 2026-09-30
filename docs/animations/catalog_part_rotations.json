@@ -1,0 +1,23 @@
+{
+  "id": "04",
+  "slug": "rotations",
+  "scene": "AnimRotations",
+  "level": 2,
+  "section": {"en": "Kinematics", "fr": "Cinématique"},
+  "title": {"en": "Rotations", "fr": "Rotations"},
+  "description": {
+    "en": "The same three Euler angles give different rotation matrices in the xyz and zyx sequences; biorbd converts between angles, matrices and quaternions.",
+    "fr": "Les trois mêmes angles d'Euler donnent des matrices de rotation différentes dans les séquences xyz et zyx ; biorbd convertit entre angles, matrices et quaternions."
+  },
+  "notes": {
+    "en": "Angles 0.5, 0.3, 0.8 rad. Numbers come from a real biorbd 1.12.3 run (Rotation and Quaternion classes).",
+    "fr": "Angles 0,5, 0,3, 0,8 rad. Les nombres viennent d'un vrai calcul biorbd 1.12.3 (classes Rotation et Quaternion)."
+  },
+  "links": [
+    {"label": {"en": "Euler angles to rotation matrix", "fr": "Angles d'Euler vers matrice de rotation"}, "path": "include/Utils/Rotation.h", "lines": [115, 123]},
+    {"label": {"en": "Rotation matrix to Euler angles", "fr": "Matrice de rotation vers angles d'Euler"}, "path": "include/Utils/Rotation.h", "lines": [168, 175]},
+    {"label": {"en": "Quaternion from a rotation matrix", "fr": "Quaternion depuis une matrice de rotation"}, "path": "include/Utils/Quaternion.h", "lines": [204, 211]},
+    {"label": {"en": "Segment frame as Euler angles", "fr": "Repère de segment en angles d'Euler"}, "path": "binding/python3/wrapper/segment_frame.py", "lines": [160, 177]},
+    {"label": {"en": "Example: frames of reference", "fr": "Exemple : repères de référence"}, "path": "examples/python3/manipulating_frames_of_reference.py", "lines": [36, 41]}
+  ]
+}

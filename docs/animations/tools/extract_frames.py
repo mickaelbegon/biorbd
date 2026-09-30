@@ -25,14 +25,17 @@ def main(video: Path, out_dir: Path) -> list[Path]:
             "before_card": duration - CARD_SECONDS - FADE_SECONDS - 0.5,  # inside the 2.5 s final hold
             "card_mid": duration - CARD_SECONDS / 2,
         }
-        frames = []
+        best = {name: (float("inf"), None) for name in targets}
         for frame in container.decode(stream):
-            frames.append((float(frame.pts * stream.time_base), frame))
+            pts = float(frame.pts * stream.time_base)
+            for name, target in targets.items():
+                gap = abs(pts - target)
+                if gap < best[name][0]:
+                    best[name] = (gap, frame.to_image())  # keep only the closest frame per target
     saved = []
-    for name, target in targets.items():
-        pts, frame = min(frames, key=lambda item: abs(item[0] - target))
+    for name, (_, image) in best.items():
         path = out_dir / f"{video.stem}_{name}.png"
-        frame.to_image().save(path)
+        image.save(path)
         saved.append(path)
     return saved
 

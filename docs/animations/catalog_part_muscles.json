@@ -1,0 +1,20 @@
+{
+  "id": "11", "slug": "muscles", "scene": "AnimMuscles", "level": 2,
+  "section": {"en": "Muscles", "fr": "Muscles"},
+  "title": {"en": "Muscles: length, moment arm and torque", "fr": "Muscles : longueur, bras de levier et couple"},
+  "description": {
+    "en": "The length of a muscle depends on the joint angles, and the gradient of that length with respect to the coordinates is the length Jacobian. The joint torque produced by the muscles is minus the transposed length Jacobian times the muscle forces. The video sweeps the elbow angle of the arm model, shows the length and the moment arm of the long head of the biceps, and compares the torque returned by muscles.joint_torque with minus J transposed times F computed by hand.",
+    "fr": "La longueur d'un muscle dépend des angles articulaires, et le gradient de cette longueur par rapport aux coordonnées est la jacobienne de longueur. Le couple articulaire produit par les muscles est l'opposé de la jacobienne de longueur transposée fois les forces musculaires. La vidéo balaie l'angle du coude du modèle de bras, montre la longueur et le bras de levier du long chef du biceps, et compare le couple renvoyé par muscles.joint_torque à moins J transposée fois F calculé à la main."
+  },
+  "notes": {
+    "en": "The elbow sweep is synthetic (chosen angles); lengths, Jacobians, forces and torques are biorbd outputs. All six muscles of arm26 are set to an activation of 0.5. The numerical check with this model shows joint_torque = -J^T F to about 5e-15 N.m; the moment arm is shown as the opposite of dLength/dq.",
+    "fr": "Le balayage du coude est synthétique (angles choisis) ; longueurs, jacobiennes, forces et couples sont calculés par biorbd. Les six muscles de arm26 ont une activation de 0,5. La vérification numérique avec ce modèle donne joint_torque = -J^T F à environ 5e-15 N.m près ; le bras de levier est présenté comme l'opposé de dLongueur/dq."
+  },
+  "links": [
+    {"label": {"en": "Example: muscle forces and joint torque", "fr": "Exemple : forces musculaires et couple articulaire"}, "path": "examples/python3/manipulating_muscles.py", "lines": [26, 45]},
+    {"label": {"en": "Python wrapper: length Jacobian of a muscle", "fr": "Interface Python : jacobienne de longueur d'un muscle"}, "path": "binding/python3/wrapper/muscle.py", "lines": [198, 208]},
+    {"label": {"en": "Python wrapper: joint torque of the muscles", "fr": "Interface Python : couple articulaire des muscles"}, "path": "binding/python3/wrapper/muscle.py", "lines": [462, 490]},
+    {"label": {"en": "C++ declaration of muscularJointTorque", "fr": "Déclaration C++ de muscularJointTorque"}, "path": "include/InternalForces/Muscles/Muscles.h", "lines": [206, 220]},
+    {"label": {"en": "Test of the muscles wrapper", "fr": "Test de l'interface des muscles"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_muscles.py", "lines": [44, 47]}
+  ]
+}

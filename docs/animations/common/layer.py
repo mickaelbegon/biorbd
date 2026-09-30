@@ -339,6 +339,10 @@ def _final_card(scene) -> None:
             rows.add(VGroup(label, path).arrange(DOWN, aligned_edge=LEFT, buff=0.08))
         if len(rows):
             rows.arrange(DOWN, aligned_edge=LEFT, buff=0.32).next_to(title, DOWN, buff=0.7)
+            room = rows.get_top()[1] - (-config.frame_height / 2 + 0.6)  # keep a margin under the last link
+            if rows.height > room:  # many links: shrink the list to fit
+                rows.scale(room / rows.height)
+                rows.next_to(title, DOWN, buff=0.7)
             rows.align_on_border(LEFT, buff=1.2)
         card = VGroup(title, rows)
         original(scene, FadeIn(card), run_time=0.5)

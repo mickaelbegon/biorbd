@@ -7,7 +7,7 @@
   "Marker in the world:": "Marqueur dans le monde :",
   "Hip, knee, ankle angles:": "Angles hanche, genou, cheville :",
   "{0}, {1}, {2} rad": "{0}, {1}, {2} rad",
-  "Faded: previous pose.": "Estompée : posture précédente.",
+  "The faded drawing is the previous pose.": "Le dessin estompé est la posture précédente.",
   "Change of the marker position:": "Déplacement du marqueur :",
   "When q changes, every frame moves and biorbd updates the marker.": "Quand q change, chaque repère bouge et biorbd met à jour le marqueur.",
   "biorbd code": "Code biorbd"

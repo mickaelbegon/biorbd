@@ -1,0 +1,19 @@
+{
+  "id": "08", "slug": "nonlinear-effects", "scene": "AnimNonlinearEffects", "level": 2,
+  "section": {"en": "Dynamics", "fr": "Dynamique"},
+  "title": {"en": "Nonlinear effects", "fr": "Effets non linéaires"},
+  "description": {
+    "en": "model.non_linear_effect(q, qdot) returns the generalized forces that cancel gravity and the velocity-dependent (Coriolis and centrifugal) terms. At zero velocity it is pure gravity; the velocity part grows with the square of the velocity. The video uses the pyomecaman model in a hand-chosen posture: the vertical pelvis force equals mass times 9.81, and doubling qdot multiplies the velocity part by exactly four. biorbd has no separate Coriolis function.",
+    "fr": "model.non_linear_effect(q, qdot) renvoie les forces généralisées qui annulent la gravité et les termes dépendant de la vitesse (Coriolis et centrifuge). À vitesse nulle, c'est la gravité seule ; la partie dépendant de la vitesse croît avec le carré de la vitesse. La vidéo utilise le modèle pyomecaman dans une posture choisie à la main : la force verticale du bassin vaut la masse fois 9,81, et doubler qdot multiplie exactement par quatre la partie dépendant de la vitesse. biorbd n'a pas de fonction Coriolis séparée."
+  },
+  "notes": {
+    "en": "The posture and velocities are chosen by hand (not measured); the vectors are biorbd outputs. The ratio is 4 to about 1e-13 on all 13 degrees of freedom. The pelvis joint dampings of the bioMod are not part of non_linear_effect, but inverse dynamics adds them.",
+    "fr": "La posture et les vitesses sont choisies à la main (non mesurées) ; les vecteurs sont calculés par biorbd. Le rapport vaut 4 à environ 1e-13 près sur les 13 degrés de liberté. Les amortissements articulaires du bassin du bioMod ne font pas partie de non_linear_effect, mais la dynamique inverse les ajoute."
+  },
+  "links": [
+    {"label": {"en": "Python wrapper: non_linear_effect", "fr": "Interface Python : non_linear_effect"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [101, 124]},
+    {"label": {"en": "C++ declaration of NonLinearEffect", "fr": "Déclaration C++ de NonLinearEffect"}, "path": "include/RigidBody/Joints.h", "lines": [1148, 1166]},
+    {"label": {"en": "C++ implementation of NonLinearEffect", "fr": "Implémentation C++ de NonLinearEffect"}, "path": "src/RigidBody/Joints.cpp", "lines": [1543, 1563]},
+    {"label": {"en": "Test of non_linear_effect", "fr": "Test de non_linear_effect"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_model.py", "lines": [452, 457]}
+  ]
+}

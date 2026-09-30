@@ -1,0 +1,22 @@
+{
+  "id": "06",
+  "slug": "center-of-mass",
+  "scene": "AnimCenterOfMass",
+  "level": 1,
+  "section": {"en": "Mass and inertia", "fr": "Masse et inertie"},
+  "title": {"en": "Centre of mass", "fr": "Centre de masse"},
+  "description": {
+    "en": "The centre of mass of the whole body is the mass-weighted average of the segment centres of mass, and it moves when the posture q changes.",
+    "fr": "Le centre de masse du corps entier est la moyenne pondérée par les masses des centres de masse des segments, et il se déplace quand la posture q change."
+  },
+  "notes": {
+    "en": "Model pyomecaman.bioMod, two postures. The average recomputed from the segment frames matches model.center_of_mass(q). Numbers come from a real biorbd 1.12.3 run.",
+    "fr": "Modèle pyomecaman.bioMod, deux postures. La moyenne recalculée à partir des repères des segments correspond à model.center_of_mass(q). Les nombres viennent d'un vrai calcul biorbd 1.12.3."
+  },
+  "links": [
+    {"label": {"en": "Example: centre of mass of a model", "fr": "Exemple : centre de masse d'un modèle"}, "path": "examples/python3/manipulation_model.py", "lines": [21, 22]},
+    {"label": {"en": "Model mass and centre of mass", "fr": "Masse et centre de masse du modèle"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [62, 72]},
+    {"label": {"en": "Segment mass, centre of mass and inertia", "fr": "Masse, centre de masse et inertie d'un segment"}, "path": "binding/python3/wrapper/segment.py", "lines": [51, 107]},
+    {"label": {"en": "C++ centre of mass", "fr": "Centre de masse en C++"}, "path": "include/RigidBody/Joints.h", "lines": [675, 680]}
+  ]
+}

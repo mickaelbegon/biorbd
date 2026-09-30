@@ -1,0 +1,23 @@
+{
+  "id": "14",
+  "slug": "ik-least-squares",
+  "scene": "AnimIkLeastSquares",
+  "level": 2,
+  "section": {"en": "Inverse kinematics", "fr": "Cinématique inverse"},
+  "title": {"en": "Inverse kinematics by least squares", "fr": "La cinématique inverse par moindres carrés"},
+  "description": {
+    "en": "biorbd.InverseKinematics solves each frame with a scipy least-squares solver (lm, trf or only_lm), skips markers that are NaN and, with trf, respects the joint ranges. Shown on synthetic noisy markers of a 13-DoF model, with the error measured against the known truth.",
+    "fr": "biorbd.InverseKinematics résout chaque image avec un solveur de moindres carrés de scipy (lm, trf ou only_lm), ignore les marqueurs NaN et, avec trf, respecte les amplitudes articulaires. Montré sur des marqueurs synthétiques bruités d'un modèle à 13 ddl, avec l'erreur mesurée par rapport à la vérité connue."
+  },
+  "notes": {
+    "en": "The motion, the noise and the missing marker are synthetic. The class takes a raw biorbd.Model and markers of shape (3, nb_marker, nb_frame). With method lm the bounds are applied on the first frame only; use trf to keep every frame inside the joint ranges.",
+    "fr": "Le mouvement, le bruit et le marqueur manquant sont synthétiques. La classe prend un biorbd.Model brut et des marqueurs de forme (3, nb_marker, nb_frame). Avec la méthode lm, les bornes ne sont appliquées qu'à la première image ; utilisez trf pour garder chaque image dans les amplitudes articulaires."
+  },
+  "links": [
+    {"label": {"en": "InverseKinematics class", "fr": "Classe InverseKinematics"}, "path": "binding/python3/rigid_body.py", "lines": [154, 270]},
+    {"label": {"en": "InverseKinematics.solve", "fr": "InverseKinematics.solve"}, "path": "binding/python3/rigid_body.py", "lines": [325, 394]},
+    {"label": {"en": "Joint ranges of the model", "fr": "Amplitudes articulaires du modèle"}, "path": "binding/python3/utils.py", "lines": [4, 23]},
+    {"label": {"en": "Inverse kinematics test", "fr": "Test de cinématique inverse"}, "path": "test/binding/python3/test_inverse_kinematics.py", "lines": [29, 55]},
+    {"label": {"en": "Model used", "fr": "Modèle utilisé"}, "path": "examples/pyomecaman.bioMod", "lines": [1, 30]}
+  ]
+}

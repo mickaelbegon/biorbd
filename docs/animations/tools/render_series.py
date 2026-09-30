@@ -68,7 +68,9 @@ def build_job(scene: str, path: Path, lang: str, args) -> dict:
         scene,
     ]
     env = dict(os.environ)
-    env.update({"BIORBD_ANIM_LANG": lang, "BIORBD_ANIM_REPORT_DIR": str(media)})
+    env.update(
+        {"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "BIORBD_ANIM_LANG": lang, "BIORBD_ANIM_REPORT_DIR": str(media)}
+    )
     ffmpeg = Path(os.environ.get("BIORBD_ANIM_FFMPEG_DIR", DEFAULT_FFMPEG))
     if ffmpeg.exists():
         env["PATH"] = str(ffmpeg) + os.pathsep + env.get("PATH", "")
@@ -115,6 +117,10 @@ def collect(results: list[dict], out: Path) -> None:
 
 
 def main() -> int:
+    # findings can contain non-ASCII characters (for example a minus sign): never fail on cp1252 consoles
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("scene", nargs="?", help="scene class name, e.g. AnimForwardKinematics")
     parser.add_argument("--all", action="store_true", help="render every scene of anim_*.py")

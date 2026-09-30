@@ -1,0 +1,19 @@
+{
+  "id": "13", "slug": "imu", "scene": "AnimImu", "level": 3,
+  "section": {"en": "Sensors", "fr": "Capteurs"},
+  "title": {"en": "Inertial measurement unit (IMU)", "fr": "Centrale inertielle (IMU)"},
+  "description": {
+    "en": "An IMU declared in the .bioMod is a frame fixed in a segment: biorbd gives its orientation in the world from q.",
+    "fr": "Une IMU déclarée dans le .bioMod est un repère fixé dans un segment : biorbd donne son orientation dans le monde à partir de q."
+  },
+  "notes": {
+    "en": "The wrapper does not expose IMUs yet, so the video uses model.internal (the SWIG biorbd.Model). IMU(q, idx) returns the segment world frame multiplied by the local rt; the generator checks this numerically.",
+    "fr": "Le wrapper n'expose pas encore les IMU : la vidéo utilise model.internal (le biorbd.Model SWIG). IMU(q, idx) renvoie le repère monde du segment multiplié par le rt local ; le générateur le vérifie numériquement."
+  },
+  "links": [
+    {"label": {"en": "Model with IMUs", "fr": "Modèle avec IMU"}, "path": "test/models/IMUandCustomRT/pyomecaman_withIMUs.bioMod", "lines": [853, 876]},
+    {"label": {"en": "IMUs class (C++ header)", "fr": "Classe IMUs (en-tête C++)"}, "path": "include/RigidBody/IMUs.h", "lines": [98, 138]},
+    {"label": {"en": "IMU at q (C++)", "fr": "IMU en q (C++)"}, "path": "src/RigidBody/IMUs.cpp", "lines": [87, 97]},
+    {"label": {"en": "Python test of IMU", "fr": "Test Python de l'IMU"}, "path": "test/binding/python3/test_conversion.py", "lines": [48, 62]}
+  ]
+}

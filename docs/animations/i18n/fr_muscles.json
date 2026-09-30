@@ -1,0 +1,12 @@
+{
+  "Muscles": "Muscles",
+  "A muscle turns its force into a joint torque.": "Un muscle transforme sa force en couple articulaire.",
+  "Length of BIClong: {0} to {1} m.": "Longueur de BIClong : {0} à {1} m.",
+  "Moment arm, up to {0} cm.": "Bras de levier, jusqu'à {0} cm.",
+  "Elbow angle from {0} to {1} rad, shoulder fixed at {2} rad.": "Angle du coude de {0} à {1} rad, épaule fixée à {2} rad.",
+  "At {0} rad, dLength/dq = {1} m/rad and the moment arm is its opposite.": "À {0} rad, dLongueur/dq = {1} m/rad et le bras de levier en est l'opposé.",
+  "Elbow torque, six muscles at activation {0}.": "Couple au coude, six muscles à l'activation {0}.",
+  "Difference, at most {0} N·m.": "Écart, au plus {0} N·m.",
+  "The muscle torque is minus the length Jacobian times the force.": "Le couple musculaire est l'opposé de la jacobienne de longueur fois la force.",
+  "biorbd code": "Code biorbd"
+}

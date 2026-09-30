@@ -1,0 +1,19 @@
+{
+  "id": "07", "slug": "mass-matrix", "scene": "AnimMassMatrix", "level": 2,
+  "section": {"en": "Dynamics", "fr": "Dynamique"},
+  "title": {"en": "The mass matrix", "fr": "La matrice de masse"},
+  "description": {
+    "en": "The joint-space mass matrix M(q) gives the inertial part of the joint torques, M(q) times the accelerations. It is symmetric and positive definite, and it depends on the posture. The video computes M for the arm26 model at two elbow angles, checks the symmetry and the smallest eigenvalue, and shows how the matrix changes between the two postures.",
+    "fr": "La matrice de masse M(q) dans l'espace articulaire donne la part inertielle des couples articulaires, M(q) fois les accélérations. Elle est symétrique, définie positive et dépend de la posture. La vidéo calcule M pour le modèle arm26 à deux angles du coude, vérifie la symétrie et la plus petite valeur propre, puis montre comment la matrice change d'une posture à l'autre."
+  },
+  "notes": {
+    "en": "Both postures are chosen by hand; M, the symmetry error and the eigenvalues are computed with biorbd and numpy. The diagonal term of the forearm does not change with the elbow angle, the coupling term and the shoulder term do.",
+    "fr": "Les deux postures sont choisies à la main ; M, l'erreur de symétrie et les valeurs propres sont calculées avec biorbd et numpy. Le terme diagonal de l'avant-bras ne change pas avec l'angle du coude, le terme de couplage et le terme de l'épaule changent."
+  },
+  "links": [
+    {"label": {"en": "Python wrapper: mass_matrix", "fr": "Interface Python : mass_matrix"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [73, 99]},
+    {"label": {"en": "C++ declaration of massMatrix", "fr": "Déclaration C++ de massMatrix"}, "path": "include/RigidBody/Joints.h", "lines": [927, 947]},
+    {"label": {"en": "Test of the mass matrix", "fr": "Test de la matrice de masse"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_model.py", "lines": [233, 241]},
+    {"label": {"en": "Model used: arm26", "fr": "Modèle utilisé : arm26"}, "path": "examples/arm26.bioMod", "lines": [74, 89]}
+  ]
+}

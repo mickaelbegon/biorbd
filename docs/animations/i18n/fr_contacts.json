@@ -1,0 +1,12 @@
+{
+  "Rigid contacts": "Contacts rigides",
+  "A contact forbids the motion of its point.": "Un contact interdit le mouvement de son point.",
+  "Contacts ignored: the cube is in free fall.": "Contacts ignorés : le cube est en chute libre.",
+  "Contact point {0} accelerates at {1} m/s² along z.": "Le point de contact {0} accélère à {1} m/s² selon z.",
+  "Contacts active: they cancel that motion.": "Contacts actifs : ils annulent ce mouvement.",
+  "Contact point acceleration is at most {0} m/s².": "L'accélération du point de contact vaut au plus {0} m/s².",
+  "Contact forces along z: {0} N and {1} N.": "Forces de contact selon z : {0} N et {1} N.",
+  "They sum to {0} N, the weight of the cube.": "Leur somme vaut {0} N, le poids du cube.",
+  "The contact forces hold the cube where the contacts forbid motion.": "Les forces de contact retiennent le cube là où les contacts interdisent le mouvement.",
+  "biorbd code": "Code biorbd"
+}
