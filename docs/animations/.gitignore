@@ -1,0 +1,12 @@
+# Rendered media, downloaded assets and caches are never committed
+media/
+assets/
+*.mp4
+*.png
+*.mov
+*.gif
+__pycache__/
+# JSON files we do want (the repository-wide rules do not ignore them, but keep this explicit)
+!catalog.json
+!i18n/*.json
+!catalog_part_*.json
