@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from .external_force_set import ExternalForceSet
@@ -11,7 +12,7 @@ from ..biorbd import Model, GeneralizedCoordinates, currentLinearAlgebraBackend,
 
 class Biorbd:
     def __init__(self, path):
-        self._model = Model(path)
+        self._model = Model(os.fspath(path))
         self._external_force_set = None
 
     @property
