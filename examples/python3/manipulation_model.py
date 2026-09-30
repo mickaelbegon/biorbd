@@ -17,7 +17,7 @@ def main(show: bool = True):
     q = [0] * model.nb_q
 
     # Get the mass
-    print("Mass of the model:", model.mass())
+    print("Mass of the model:", model.mass)
 
     # Get the center of mass at a specific pose. If q is not sent, then it uses the previously set q
     print(f"The center of mass at q: {model.center_of_mass(q)}")
