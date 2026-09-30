@@ -193,7 +193,7 @@ The core code is written in C++, meaning that you can fully use BIORBD from C++.
 The informations that follows is a basic guide that should allow you to perform everything you want to do.
 
 ### Create an empty yet valid model
-To create a new valid yet empty model, just call the `Model` class without parameter. All BIORBD classes live in the `BIORBD_NAMESPACE` namespace (its name depends on the chosen backend, e.g. `Biorbdeigen3`), which is why the examples use `using namespace BIORBD_NAMESPACE;`.
+To create a new valid yet empty model, just call the `Model` class without parameter. All BIORBD classes live in the `BIORBD_NAMESPACE` namespace (its name depends on the chosen backend, e.g. `BiorbdEigen3` or `BiorbdCasadi`), which is why the examples use `using namespace BIORBD_NAMESPACE;`.
 ```C++
 #include "biorbd.h"
 using namespace BIORBD_NAMESPACE;
