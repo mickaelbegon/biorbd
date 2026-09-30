@@ -704,9 +704,9 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
         double radius(-1);
         double stiffness(-1);
         double damping(-1);
-        double muStatic(-1);
-        double muDynamic(-1);
-        double muViscous(-1);
+        double muStatic(0.8);
+        double muDynamic(0.7);
+        double muViscous(0.5);
 
         while (file.read(property_tag) &&
                property_tag.tolower().compare("endsoftcontact")) {
@@ -729,11 +729,11 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(stiffness, variable);
           } else if (!property_tag.tolower().compare("damping")) {
             file.read(damping, variable);
-          } else if (!property_tag.tolower().compare("muStatic")) {
+          } else if (!property_tag.tolower().compare("mustatic")) {
             file.read(muStatic, variable);
-          } else if (!property_tag.tolower().compare("muDynamic")) {
+          } else if (!property_tag.tolower().compare("mudynamic")) {
             file.read(muDynamic, variable);
-          } else if (!property_tag.tolower().compare("muViscous")) {
+          } else if (!property_tag.tolower().compare("muviscous")) {
             file.read(muViscous, variable);
           }
         }

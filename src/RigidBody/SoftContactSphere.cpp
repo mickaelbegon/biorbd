@@ -31,6 +31,10 @@ rigidbody::SoftContactSphere::SoftContactSphere(const SoftContactNode &other)
   *m_radius = *tp.m_radius;
   *m_stiffness = *tp.m_stiffness;
   *m_damping = *tp.m_damping;
+  *m_muStatic = *tp.m_muStatic;
+  *m_muDynamic = *tp.m_muDynamic;
+  *m_muViscous = *tp.m_muViscous;
+  *m_transitionVelocity = *tp.m_transitionVelocity;
   setType();
 }
 
