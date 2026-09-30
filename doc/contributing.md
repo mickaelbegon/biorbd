@@ -57,8 +57,8 @@ Adding tests is required to get your development merged to the master branch.
 Therefore, it is worth getting in the habit of writing tests ahead of time so this is never an issue.
 Each time you push to your pull-request, the `biorbd` test suite will run automatically.
 However, we strongly encourage running the tests prior to submitting the pull-request.
-If you configured your project using CMake and set `BUILD_TEST` to `ON`, the google test toolbox should download and compile itself.
-You can thereafter run the test by running the binary `biorbd_tests` (the file will be at different place depending on the OS you are using).
+If you configured your project using CMake and set `BUILD_TESTS` to `ON`, the google test toolbox should download and compile itself.
+You can thereafter run the test by running the binary `biorbd_eigen_tests` (or `biorbd_casadi_tests` if you chose the `Casadi` math backend); the file will be at different place depending on the OS you are using.
 
 ## Convention of coding
 
