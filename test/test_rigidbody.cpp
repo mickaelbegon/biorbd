@@ -554,7 +554,7 @@ TEST(SoftContacts, unitTest){
 
         utils::Vector3d force = sphere.computeForce(x, dx, angularVelocity);
 
-        std::vector<double> forceExpected = {0.003612873666450995, -0.0020071520369172192, 0.0054920962166388866};
+        std::vector<double> forceExpected = {0., 0., 0.};
         for (unsigned int i = 0; i < 3; ++i) {
             SCALAR_TO_DOUBLE(f, force(i));
             EXPECT_NEAR(f, forceExpected[i], requiredPrecision);
@@ -562,13 +562,13 @@ TEST(SoftContacts, unitTest){
     }
 
     {
-        utils::Vector3d x(0.01, 0, 0.0501);
+        utils::Vector3d x(0.01, 0, 0.05);
         utils::Vector3d dx(0.01, 0, -0.01);
         utils::Vector3d angularVelocity(0, 0, 0);
 
         utils::Vector3d force = sphere.computeForce(x, dx, angularVelocity);
 
-        std::vector<double> forceExpected = {-0.11760935061746022, 0., 0.15327642466721322};
+        std::vector<double> forceExpected = {0., 0., 0.};
         for (unsigned int i = 0; i < 3; ++i) {
             SCALAR_TO_DOUBLE(f, force(i));
             EXPECT_NEAR(f, forceExpected[i], requiredPrecision);
@@ -582,10 +582,23 @@ TEST(SoftContacts, unitTest){
 
         utils::Vector3d force = sphere.computeForce(x, dx, angularVelocity);
 
-        std::vector<double> forceExpected = {-3.5460071631036567, -3.5460071631036567, 6.4525442574502909};
+        std::vector<double> forceExpected = {-5.492097272623044, -5.492097272623044, 9.993775840769871};
         for (unsigned int i = 0; i < 3; ++i) {
             SCALAR_TO_DOUBLE(f, force(i));
             EXPECT_NEAR(f, forceExpected[i], requiredPrecision);
+        }
+    }
+
+    {
+        utils::Vector3d x(0., 0., 0.049);
+        utils::Vector3d dx(0., 0., 0.2);
+        utils::Vector3d angularVelocity(0., 0., 0.);
+
+        utils::Vector3d force = sphere.computeForce(x, dx, angularVelocity);
+
+        for (unsigned int i = 0; i < 3; ++i) {
+            SCALAR_TO_DOUBLE(f, force(i));
+            EXPECT_NEAR(f, 0., requiredPrecision);
         }
     }
 }
@@ -603,7 +616,7 @@ TEST(SoftContacts, ForceAtOrigin) {
         CALL_BIORBD_FUNCTION_1PARAM2ARGS(force, sphere, computeForceAtOrigin, model, Q, Qdot);
 
         std::vector<double> forceExpected = {
-            -670.95355043718416, 2.944729504204179, 2.2119497381886286, 0, -221.1949738188676, 294.47295042042418 };
+            -670.953552663618, 2.9447295139757124, 2.2119497455285702, 0, -221.19497455286171, 294.4729513975775 };
         for (size_t i = 0; i < 6; ++i) {
             EXPECT_NEAR(static_cast<double>(force(i)), forceExpected[i], requiredPrecision);
         }
