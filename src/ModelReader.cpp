@@ -1,6 +1,7 @@
 #define BIORBD_API_EXPORTS
 #include "ModelReader.h"
 
+#include <cctype>
 #include <fstream>
 #include <limits.h>
 #include <sstream>
@@ -68,6 +69,29 @@
 #endif
 
 using namespace BIORBD_NAMESPACE;
+
+namespace {
+// Warn (without stopping the reading) that a tag was not recognized by the
+// reader, and is therefore ignored. Only tokens starting with a letter or an
+// underscore are reported: the values following an unrecognized tag (numbers,
+// variables, equations) are also seen as tags by the reader, and reporting
+// them would only add noise.
+void warnUnknownTag(const char *block, const utils::String &tag) {
+  if (tag.empty()) {
+    return;
+  }
+  const unsigned char firstChar = static_cast<unsigned char>(tag[0]);
+  if (!std::isalpha(firstChar) && firstChar != '_') {
+    return;
+  }
+  std::string message("Unknown tag \"");
+  message += tag;
+  message += "\" found in a \"";
+  message += block;
+  message += "\" block, it is ignored";
+  utils::Error::warning(false, message);
+}
+}  // namespace
 
 // ------ Public methods ------ //
 Model Reader::readModelFile(const utils::Path &path) {
@@ -334,6 +358,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             utils::Vector3d meshColor;
             readVector3d(file, variable, meshColor);
             mesh.setColor(meshColor);
+          } else {
+            warnUnknownTag("segment", property_tag);
           }
         }
         if (!isRangeQSet) {
@@ -435,6 +461,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(anatomical);
           } else if (!property_tag.tolower().compare("axestoremove")) {
             file.read(axesToRemove);
+          } else {
+            warnUnknownTag("marker", property_tag);
           }
 
         model->addMarker(
@@ -475,6 +503,7 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
                !(!property_tag.tolower().compare("endimu") ||
                  !property_tag.tolower().compare("endmimu") ||
                  !property_tag.tolower().compare("endcustomrt"))) {
+          bool isCommonTag(true);
           if (!property_tag.tolower().compare("parent")) {
             // Dynamically find the parent number
             file.read(parent_str);
@@ -494,6 +523,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(technical);
           } else if (!property_tag.tolower().compare("anatomical")) {
             file.read(anatomical);
+          } else {
+            isCommonTag = false;
           }
 
           if (fromMarkers) {
@@ -515,6 +546,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
               }
             } else if (!property_tag.tolower().compare("recalculate")) {
               file.read(axisToRecalculate);
+            } else if (!isCommonTag) {
+              warnUnknownTag("imu/customrt", property_tag);
             }
           } else {
             if (!property_tag.tolower().compare("rtinmatrix")) {
@@ -524,6 +557,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             } else if (!property_tag.tolower().compare("rt")) {
               readRtMatrix(file, variable, RTinMatrix, RT);
               isRTset = true;
+            } else if (!isCommonTag) {
+              warnUnknownTag("imu/customrt", property_tag);
             }
           }
         }
@@ -611,6 +646,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             readVector3d(file, variable, norm);
           } else if (!property_tag.tolower().compare("axis")) {
             file.read(axis);
+          } else {
+            warnUnknownTag("contact", property_tag);
           }
         }
         if (version == 1) {
@@ -641,8 +678,7 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             utils::Error::check(
                 model->IsBodyId(static_cast<unsigned int>(id_predecessor)),
                 "Wrong name in a segment");
-          }
-          if (!property_tag.tolower().compare("successor")) {
+          } else if (!property_tag.tolower().compare("successor")) {
             //  Dynamically find the parent number
             file.read(successor_str);
             id_successor =
@@ -679,6 +715,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             }
           else if (!property_tag.tolower().compare("stabilizationparameter")) {
             file.read(stabilizationParam, variable);
+          } else {
+            warnUnknownTag("loopconstraint", property_tag);
           }
         }
         if (stabilizationParam > 0) {
@@ -735,6 +773,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(muDynamic, variable);
           } else if (!property_tag.tolower().compare("muViscous")) {
             file.read(muViscous, variable);
+          } else {
+            warnUnknownTag("softcontact", property_tag);
           }
         }
 
@@ -880,6 +920,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
           } else if (!property_tag.tolower().compare("offset")) {
             file.read(offset, variable);
             isOffsetSet = true;
+          } else {
+            warnUnknownTag("actuator", property_tag);
           }
         }
         // Verify that everything is there
@@ -993,6 +1035,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             utils::Error::check(
                 model->IsBodyId(static_cast<unsigned int>(idx)),
                 "Wrong insertion parent name for a muscle");
+          } else {
+            warnUnknownTag("musclegroup", property_tag);
           }
         }
         model->addMuscleGroup(name, origin_parent_str, insert_parent_str);
@@ -1136,11 +1180,15 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
                 } else if (!subproperty_tag.tolower().compare(
                                "recoveryfactor")) {
                   fatigueParameters.setRecoveryFactor(param);
+                } else {
+                  warnUnknownTag("fatigueparameters", subproperty_tag);
                 }
               }
             }
           } else if (!property_tag.tolower().compare("shapefactor")) {
             file.read(shapeFactor);
+          } else {
+            warnUnknownTag("muscle", property_tag);
           }
         }
         utils::Error::check(idxGroup != -1, "No muscle group was provided!");
@@ -1228,6 +1276,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(dampingFactor, variable);
           } else if (!property_tag.tolower().compare("maxshorteningspeed")) {
             file.read(maxShorteningSpeed, variable);
+          } else {
+            warnUnknownTag("ligament", property_tag);
           }
         }
         // Verify that everything is there
@@ -1346,6 +1396,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(tauEq, variable);
           } else if (!property_tag.tolower().compare("pbeta")) {
             file.read(pBeta, variable);
+          } else {
+            warnUnknownTag("passivetorque", property_tag);
           }
         }
         // Verify that everything is there
@@ -1438,6 +1490,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
                 "Via point cannot be define either for ligament and muscle.");
           } else if (!property_tag.tolower().compare("position")) {
             readVector3d(file, variable, position);
+          } else {
+            warnUnknownTag("viapoint", property_tag);
           }
         }
         position.setName(name);
@@ -1516,6 +1570,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(radius, variable);
           } else if (!property_tag.tolower().compare("length")) {
             file.read(length, variable);
+          } else {
+            warnUnknownTag("wrapping", property_tag);
           }
         }
         utils::Error::check(parent != "", "Parent was not defined");
@@ -1542,6 +1598,8 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
           idxLigament = model->ligamentID(ligament);
           model->ligament(idxLigament).addPathObject(cylinder);
         }
+      } else {
+        warnUnknownTag("file (top level)", main_tag);
       }
     }
   } catch (std::runtime_error message) {
