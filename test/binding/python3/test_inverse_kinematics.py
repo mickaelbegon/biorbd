@@ -38,7 +38,9 @@ def test_solve(brbd, method):
     joint_dampings = [0, 0, 0]
     biorbd_model.segment(0).setJointDampings(joint_dampings)
 
-    qinit = np.array([0.1, 0.1, -0.3, 0.35, 1.15, -0.35, 1.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+    # qinit must lie inside the joint ranges of the model (the knees are in [-2.09, 0]),
+    # otherwise the bounded methods ("lm" on the first frame and "trf") cannot recover it
+    qinit = np.array([0.1, 0.1, -0.3, 0.35, 1.15, -0.35, 1.15, 0.1, -0.1, 0.1, 0.1, -0.1, 0.1])
 
     markers = np.ndarray((3, biorbd_model.nbMarkers(), 1))
     markers[:, :, 0] = np.array([mark.to_array() for mark in biorbd_model.markers(qinit)]).T
@@ -46,13 +48,7 @@ def test_solve(brbd, method):
     ik = biorbd.InverseKinematics(biorbd_model, markers)
     ik_q = ik.solve(method=method)
 
-    if method == "only_lm":
-        np.testing.assert_almost_equal(
-            np.squeeze(ik_q.T),
-            qinit,
-        )
-    elif method == "trf" or method == "lm":
-        np.testing.assert_almost_equal(np.squeeze(np.round(ik_q, 1).T), qinit, decimal=1)
+    np.testing.assert_almost_equal(np.squeeze(ik_q.T), qinit)
 
 
 if __name__ == "__main__":
