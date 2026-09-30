@@ -37,6 +37,13 @@
       - [Imu](#imu)
       - [Contact](#contact)
       - [Loopconstraint](#loopconstraint)
+      - [Softcontact](#softcontact)
+      - [Musclegroup](#musclegroup)
+      - [Muscle](#muscle)
+      - [Viapoint](#viapoint)
+      - [Ligament](#ligament)
+      - [Passivetorque](#passivetorque)
+      - [Wrapping](#wrapping)
       - [Actuators](#actuators)
   - [Convert from OpenSim models](#convert-from-opensim-models)
 - [How to contribute](#how-to-contribute)
@@ -541,7 +548,7 @@ If the marker will be taged as anatomical (will be returned when asking anatomic
 It is possible to project the marker onto some axes, if so, write the name of the axes to project onto here. Waits for the axes in a string.
 
 #### Imu
-Same as a marker, but for inertial measurement unit. 
+Same as a marker, but for inertial measurement unit. The tag `imu` ends with `endimu`. For files with a `version` lower than $4$, `mimu` (ending with `endmimu`) is accepted as a synonym; from version $4$ on, `mimu` raises an error.
 ```c
 imu my_imu
     parent segment_parent
@@ -566,6 +573,22 @@ If the marker will be taged as technical (will be returned when asking technical
 ##### anatomical <!-- omit from toc -->
 If the marker will be taged as anatomical (will be returned when asking anatomical markers). Default value is false ($0$).
 
+##### customrt and frommarkers <!-- omit from toc -->
+A `customrt` / `endcustomrt` block defines a custom reference frame attached to a segment, with the same `parent` and `rt` tags as an `imu` (it ignores `technical` and `anatomical`). Both `imu` and `customrt` can alternatively be built from markers already defined on the same parent, using the `frommarkers` tag, which must be the first tag of the block (`rt` and `rtinmatrix` are then ignored). The tags are `originmarkername` (1 string), `firstaxis` and `secondaxis` (1 string each, e.g. `x`), `firstaxismarkernames` and `secondaxismarkernames` (2 strings each: the beginning and the end marker of the axis) and `recalculate` (`firstaxis` or `secondaxis`, the axis to recompute so the frame is orthonormal).
+```c
+customrt my_rt
+    frommarkers
+    parent Seg1
+    originmarkername m1
+    firstaxis x
+    firstaxismarkernames m1 m2
+    secondaxis z
+    secondaxismarkernames m1 m3
+    recalculate firstaxis
+endcustomrt
+```
+(from `test/models/IMUandCustomRT/RT_sane.bioMod`)
+
 #### Contact <!-- omit from toc -->
 The position of a non acceleration point while computing the forward dynamics. 
 ```c
@@ -586,9 +609,6 @@ The name of the `axis` that the contact acts on. If the version of the file is $
 
 ##### normal <!-- omit from toc -->
 The `normal` that the contact acts on. This tags waits for $3$ values with a norm $1$. If the version of the file is not $1$, this tag has no effect. To get the `x`, `y` and `z` axes, one must therefore define three separate contacts. 
-
-##### acceleration <!-- omit from toc -->
-The constant `acceleration` of the contact point. The default values are `0, 0, 0`. 
 
 #### Loopconstraint
 A closed kinematic loop constraint between two segments (the reader calls `AddLoopConstraint`, see `src/ModelReader.cpp`). The name of the constraint is generated as `Loop_<predecessor>_<successor>`.
@@ -614,6 +634,191 @@ The $6$ values of the spatial vector that defines the constrained axis.
 
 ##### stabilizationparameter <!-- omit from toc -->
 The parameter of the constraint stabilization. The stabilization is enabled only if this value is strictly positive; by default, it is disabled.
+
+#### Softcontact
+A soft contact, i.e. a sphere attached to a segment that produces a force depending on its penetration in the ground. The name follows the tag, and the tag pair is `softcontact` / `endsoftcontact`.
+```c
+softcontact Contact1
+    parent Seg1
+    type sphere
+    position 2 3 4
+    radius 5
+    stiffness 6
+    damping 7
+endsoftcontact
+```
+(from `test/models/cubeWithSoftContacts.bioMod`)
+
+##### parent <!-- omit from toc -->
+The segment the contact is attached to. It must be defined earlier in the file. It waits for $1$ string.
+
+##### type <!-- omit from toc -->
+The type of soft contact. The only type accepted by the reader is `sphere`, and the tag is mandatory.
+
+##### position <!-- omit from toc -->
+The $3$ values position of the center of the sphere in the local reference frame of the segment. The default values are `0 0 0`.
+
+##### radius, stiffness, damping <!-- omit from toc -->
+The parameters of the sphere, $1$ value each. The default value is $-1$: the reader does not check that they were provided, so always define them.
+
+##### muStatic, muDynamic, muViscous <!-- omit from toc -->
+These three friction tags are present in `src/ModelReader.cpp`, but the reader currently compares them to mixed-case names after lower-casing the tag, so they are **never read** (the values stay at $-1$).
+
+#### Musclegroup
+A muscle group is the set of muscles that go from an origin segment to an insertion segment. It must be defined before the muscles that use it. It requires the `MODULE_MUSCLES` CMake option (default `ON`); the tag pair is `musclegroup` / `endmusclegroup` and the name follows the tag.
+```c
+musclegroup base_to_r_ulna_radius_hand
+    OriginParent base
+    InsertionParent r_ulna_radius_hand
+endmusclegroup
+```
+(from `test/models/arm26_WithLigaments.bioMod`)
+
+##### originparent and insertionparent <!-- omit from toc -->
+The names of the segments where the muscles of the group originate and insert, $1$ string each. They must be defined earlier in the file.
+
+#### Muscle
+A muscle of a muscle group. The tag pair is `muscle` / `endmuscle` and the name follows the tag.
+```c
+muscle TRIlong
+    Type hillthelenfatigable
+    musclegroup base_to_r_ulna_radius_hand
+    OriginPosition -0.05365 -0.01373 0.14723
+    InsertionPosition -0.0219 0.01046 -0.00078
+    optimalLength 0.134
+    maximalForce 798.52
+    tendonSlackLength 0.143
+    pennationAngle 0.20943951
+    fatigueParameters
+        Type Xia
+        fatiguerate 0.01
+        recoveryrate 0.002
+        developfactor 10
+        recoveryfactor 10
+    endfatigueparameters
+endmuscle
+```
+(shortened from `test/models/arm26_WithLigaments.bioMod`)
+
+##### musclegroup <!-- omit from toc -->
+The muscle group the muscle belongs to. It is mandatory and the group must be defined earlier in the file. It waits for $1$ string.
+
+##### type <!-- omit from toc -->
+The type of muscle, $1$ string among `idealizedactuator`, `hill`, `hilldegroote` (or `degroote`), `hillthelen` (or `thelen`), `hillthelenactive` (or `thelenactive`), `hilldegrooteactive` (or `degrooteactive`), `hillthelenfatigable` (or `thelenfatigable`) and `hilldegrootefatigable` (or `degrootefatigable`). Any other value raises an error.
+
+##### statetype <!-- omit from toc -->
+The type of muscle state, `buchanan` or `degroote`. Optional.
+
+##### usedamping <!-- omit from toc -->
+If the muscle uses damping (`1`) or not (`0`). Default is $0$.
+
+##### originposition and insertionposition <!-- omit from toc -->
+The $3$ values positions of the origin and the insertion of the muscle in the local reference frame of the origin and insertion segments of its muscle group. The default values are `0 0 0`.
+
+##### optimallength, tendonslacklength, pennationangle, maximalforce, pcsa <!-- omit from toc -->
+The characteristics of the muscle, $1$ value each, all with a default value of $0$. The pennation angle is in radian, the force in Newton and the lengths in meter.
+
+##### maximalexcitation and maxshorteningspeed <!-- omit from toc -->
+The maximal excitation (default $1$) and the maximal shortening speed (default $10$). Please note that the `maxVelocity` tag found in some models is **not read** by the reader; the tag to use is `maxshorteningspeed`.
+
+##### shapefactor <!-- omit from toc -->
+The shape factor of the muscle state. It is used only if `statetype` is `buchanan`. It cannot be a `$variable`.
+
+##### fatigueparameters <!-- omit from toc -->
+The `fatigueparameters` / `endfatigueparameters` sub-block defines the fatigue model of the muscle. It contains `type` (`simple` or `xia`), `fatiguerate`, `recoveryrate`, `developfactor` and `recoveryfactor` ($1$ value each, no `$variable`). Please do not add other tags in this block, since the reader would take them for a value to read.
+
+#### Viapoint
+A via point through which the line of action of a muscle or of a ligament passes. It must be defined after the muscle or ligament it belongs to. The tag pair is `viapoint` / `endviapoint` and the name follows the tag.
+```c
+viapoint TRIlong-P2
+    parent r_humerus
+    muscle TRIlong
+    musclegroup base_to_r_ulna_radius_hand
+    position -0.02714 -0.11441 -0.00664
+endviapoint
+```
+(from `test/models/arm26_WithLigaments.bioMod`)
+
+##### parent <!-- omit from toc -->
+The segment the via point is attached to. It waits for $1$ string.
+
+##### muscle and musclegroup, or ligament <!-- omit from toc -->
+The muscle (with its muscle group) or the ligament (`ligament`) the via point belongs to. It cannot be both. If neither is given, the via point is silently ignored.
+
+##### position <!-- omit from toc -->
+The $3$ values position of the via point in the local reference frame of the parent segment. The default values are `0 0 0`.
+
+#### Ligament
+A ligament between two segments. It requires the `MODULE_LIGAMENTS` CMake option (default `ON`). The tag pair is `ligament` / `endligament` and the name follows the tag.
+```c
+ligament lig1
+    Type constant
+    origin r_humerus
+    insertion r_ulna_radius_hand
+    force 500
+    OriginPosition 0.0068 -0.1739 -0.0036
+    InsertionPosition -0.0032 -0.0239 0.0009
+    ligamentslacklength 0.0858
+    dampingfactor 0.5
+endligament
+```
+(from `test/models/arm26_WithLigaments.bioMod`)
+
+##### type <!-- omit from toc -->
+The type of ligament, mandatory: `constant` (requires `force`), `linearspring` (requires `stiffness`) or `secondorderspring` (requires `stiffness`, and accepts `epsilon`, default $0$). All types require `ligamentslacklength`.
+
+##### origin and insertion <!-- omit from toc -->
+The names of the segments where the ligament originates and inserts, $1$ string each, both mandatory.
+
+##### originposition and insertionposition <!-- omit from toc -->
+The $3$ values positions of the origin and the insertion in the local reference frame of their segment. The default values are `0 0 0`.
+
+##### dampingfactor and maxshorteningspeed <!-- omit from toc -->
+The damping factor (default $0$) and the maximal shortening speed (default $1$).
+
+#### Passivetorque
+A passive torque acting on one degree of freedom of a segment. It requires the `MODULE_PASSIVE_TORQUES` CMake option (default `ON`). The tag pair is `passivetorque` / `endpassivetorque`, and the **name is the name of the segment**.
+```c
+passivetorque r_ulna_radius_hand_rotation1
+    type constant
+    dof RotZ
+    torque 5
+endpassivetorque
+```
+(from `test/models/arm26_WithPassiveTorques.bioMod`)
+
+##### type and dof <!-- omit from toc -->
+Both are mandatory. The `type` is `constant` (requires `torque`), `linear` (requires `T0` and `slope`, or `pente`) or `exponential` (requires `k1`, `k2`, `b1`, `b2` and `wmax`; it also accepts `qmid`, `deltap`, `sv`, `taueq` and `pbeta`). The `dof` is the name of the degree of freedom of the segment, for instance `RotZ`.
+
+#### Wrapping
+A wrapping object around which a muscle or a ligament is wrapped. The tag pair is `wrapping` / `endwrapping` and the name follows the tag.
+```c
+wrapping cyl1
+    parent Seg0
+    type halfcylinder
+    RT pi/10 pi/8 pi/6 xyz 0.1 0.2 0.3
+    muscle line
+    musclegroup Seg02seg1
+    radius 0.1
+    length 2
+endwrapping
+```
+(from `examples/WrappingObjectExample.bioMod`)
+
+##### parent <!-- omit from toc -->
+The segment the object is attached to, mandatory, $1$ string.
+
+##### type <!-- omit from toc -->
+The type of wrapping object, mandatory. The only type accepted by the reader is `halfcylinder`.
+
+##### rt and rtinmatrix <!-- omit from toc -->
+The position of the object relative to its parent, as for the segments. The `rtinmatrix` tag, when used, must appear before `rt`; unlike for the segments, its default is $0$ for all versions.
+
+##### radius and length <!-- omit from toc -->
+The radius (strictly positive) and the length (positive or null) of the half cylinder.
+
+##### muscle and musclegroup, or ligament <!-- omit from toc -->
+The muscle (with its muscle group) or the ligament that wraps around the object. The muscle or ligament must be defined earlier in the file. If neither is given, the object is silently ignored. Please note that the `wrappingside` tag found in `examples/WrappingObjectExample.bioMod` is **not read** by the reader.
 
 #### Actuators
 The Actuators specifies the different parameters used to express the torque generated by a particular movement at a joint. 
