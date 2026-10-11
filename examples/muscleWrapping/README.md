@@ -76,8 +76,10 @@ defect threshold is `2e-9` in normalized coordinates; tangent fitting targets
 non-intersection or a global minimum. Failure raises an error.
 
 `Geometry::pointsInGlobal()` contains anchors and active entry/exit contacts.
-`Geometry::pathPointsInGlobal()` additionally samples each new surface arc, so
-it can be plotted as a 3-D polyline. Legacy objects retain their original point
+`Geometry::pathPointsInGlobal()` samples each new surface arc for Eigen, so it
+can be plotted as a 3-D polyline. In the CasADi MX graph, both point methods
+use a fixed two contact slots per wrapping object; inactive slots are duplicated
+and arcs are not densely sampled. Legacy objects retain their original point
 representation. Arc integration and the analytical cylinder helix determine
 the native length; the plotted polyline is an approximation.
 
@@ -99,8 +101,27 @@ differentiable. Failed solves invalidate geometry and velocity caches.
 
 ## Supported scope
 
-- Eigen numerical backend. CasADi still compiles; new contact evaluation raises
-  an explicit unsupported-solver error.
+- Eigen and CasADi MX use the same double-precision contact kernel. CasADi
+  evaluates the complete input `Q` through a callback and returns the exact
+  first derivative of the converged stationary length on its current contact
+  branch. Higher-order derivatives are formed by centred finite differences of
+  that gradient; changes of active set or topology can therefore be
+  nonsmooth. The callback registry retains one immutable graph per distinct
+  model/path definition for the process lifetime; numerical evaluations do not
+  grow the registry. An exported CasADi `Function` remains usable after its
+  source model is destroyed.
+- CasADi support targets `Model` / `Geometry` length and derivative expressions.
+  Direct symbolic use of `WrappingSurface::wrapPoints()` is not supported at
+  this milestone. New shapes require `Q_size == dof_count`; quaternion
+  configurations with a different size are rejected explicitly.
+- Construct wrapping expressions from MX inputs; direct SX inputs to the model
+  are not supported. CasADi 3.7 and newer can expand a `Function` containing
+  these callbacks by retaining them as SX call nodes. This is tested callback
+  expansion, not pure algebraic expansion or standalone code generation. With
+  older CasADi versions, use `biorbd.to_casadi_func(..., expand=False)`.
+- CasADi Function serialization/deserialization, JIT, and standalone C code
+  generation are unsupported. The MX graph can be used directly in a CasADi
+  `Function` or passed to the project helper.
 - Cylinder: exact helical geodesic on the finite lateral surface. Rim and cap
   contacts are unsupported.
 - Ellipsoid: principal symmetry-plane arcs and connected stationary 3-D
@@ -121,9 +142,14 @@ these examples should be kept as `.bioMod` sources.
 
 ## Validation
 
-Native and Python tests compare independent lengths, contact geometry, rigid
-frame invariance, copy isolation, multi-object/via paths, length derivatives
-against centred finite differences, and failure cases. The six original reference lengths
+Native and Python regressions compare independent lengths, contact geometry,
+rigid frame invariance, copy isolation, multi-object/via paths, length derivatives
+against centred finite differences, and failure cases. The latest reported runs
+passed 171 Eigen C++ tests, 78 Eigen Python tests, 147 CasADi C++ tests, and 12
+CasADi Python tests, including callback/concurrency coverage. CasADi Hessian
+finite differences use a fixed Q step of `1e-6` in each coordinate’s model unit.
+Hessian checks use an absolute tolerance of `2e-4`; symmetry checks use
+`5e-5`. The six original reference lengths
 are 349.210591272, 354.197814806, 144.705264266, 200.000000000, 396.450336454 and
 499.027887126 mm. Unsupported cases are tested as errors, not approximated paths.
 
@@ -135,6 +161,45 @@ Moving ellipsoid, torus, and mixed-chain fixtures each have nine DOFs: three
 obstacle translations, three obstacle rotations, and three insertion translations.
 Tests compare all nine length derivatives and directional speed with centred
 finite differences and check a return to the initial pose after warm starts.
+
+For a nine-DOF moving ellipsoid model, this MX graph exposes LMT, its Jacobian,
+the directional velocity, the force-induced generalized torque, and the
+Hessian. Keep `expand=False` when using the convenience wrapper:
+
+```python
+import casadi as ca
+import biorbd_casadi as biorbd
+
+model = biorbd.Model("test/models/wrapping_ellipsoid_3d_moving.bioMod")
+q = ca.MX.sym("q", 9)
+qdot = ca.MX.sym("qdot", 9)
+force = ca.MX.sym("F")
+model.updateMuscles(q, qdot, True)
+geometry = model.muscle(0).position()
+to_mx = lambda value: value.to_mx() if hasattr(value, "to_mx") else ca.MX(value)
+L = to_mx(geometry.musculoTendonLength())
+J = to_mx(geometry.jacobianLength())
+v = to_mx(geometry.velocity())
+tau = -J.T @ force
+H = ca.hessian(L, q)[0]
+wrapping = ca.Function("wrapping", [q, qdot, force], [L, J, v, tau, H])
+
+# Alternative when wrapping an existing callable with the project helper
+# (keep expansion disabled on CasADi versions older than 3.7):
+# f = biorbd.to_casadi_func("wrapping", callable_, q, expand=False)
+```
+
+`examples/python3/muscleWrappingCasadi.py` is a reproducible IPOPT smoke test
+using the moving ellipsoid and mixed-chain fixtures from this source checkout.
+It increases LMT by 0.5 mm through one insertion translation and checks both
+IPOPT's default Hessian interface (supplied with finite differences of the
+stationary gradient) and `limited-memory`. All four local solves succeeded in
+5–7 iterations with length error below `1.6e-13` m; this small smooth-branch
+problem does not establish convergence for arbitrary wrapping optimization.
+
+```sh
+python examples/python3/muscleWrappingCasadi.py --output /tmp/wrapping-casadi.json
+```
 
 The independent reference generators are in `references/`. They require NumPy
 and SciPy; the cylinder generator also compares with the freshly built Eigen

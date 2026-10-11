@@ -1,12 +1,11 @@
 #include "WrappingGeodesic.h"
-#ifndef BIORBD_USE_CASADI_MATH
 #include <Eigen/Cholesky>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <string>
 #include <sstream>
-using namespace BIORBD_NAMESPACE::internal_forces::wrapping_detail;
+using namespace biorbd::wrapping;
 namespace {
 typedef Eigen::Matrix<double,6,1> State;
 typedef Eigen::Matrix<double,4,1> Residual;
@@ -137,7 +136,7 @@ double Surface::chordLevel(const Eigen::Vector3d& a,const Eigen::Vector3d& b) co
     for(double t:ts) minimum=std::min(minimum,polynomial(c,t));
     return minimum/std::pow(major+minor,4);
 }
-Result BIORBD_NAMESPACE::internal_forces::wrapping_detail::shoot(const Surface& s,const Eigen::Vector3d& a,
+Result biorbd::wrapping::shoot(const Surface& s,const Eigen::Vector3d& a,
     const Eigen::Vector3d& b,const Eigen::Vector3d& seed,bool finalSolve) {
     Eigen::Vector3d u=fit(s,a,b,seed,128,2e-8);
     if(!finalSolve) {Result result;result.parameters=u;result.length=std::exp(u[2]);return result;}
@@ -165,4 +164,3 @@ Result BIORBD_NAMESPACE::internal_forces::wrapping_detail::shoot(const Surface& 
     for(const State& state:states) result.points.push_back(state.head<3>());
     return result;
 }
-#endif

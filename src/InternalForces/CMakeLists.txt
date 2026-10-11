@@ -12,10 +12,15 @@ set(SRC_LIST_MODULE
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingSphere.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingSurface.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingGeodesic.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingNumericalKernel.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingCylinder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingEllipsoid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingTorus.cpp"
 )
+
+if(BIORBD_USE_CASADI_MATH)
+    list(APPEND SRC_LIST_MODULE "${CMAKE_CURRENT_SOURCE_DIR}/WrappingCasadi.cpp")
+endif()
 
 # Create the library
 if (WIN32)
@@ -33,11 +38,17 @@ set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "_debug")
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${RBDL_INCLUDE_DIR}"
     "${MATH_BACKEND_INCLUDE_DIR}"
+    "${EIGEN3_INCLUDE_DIR}"
     "${CMAKE_SOURCE_DIR}/include"
     "${BIORBD_BINARY_DIR}/include"
 
 )
-
+# Modern Eigen config packages provide their include paths on the imported
+# target; older discovery modules use EIGEN3_INCLUDE_DIR above.
+if(TARGET Eigen3::Eigen)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 
 # Add the dependencies for insuring build order
 target_link_libraries(${PROJECT_NAME}

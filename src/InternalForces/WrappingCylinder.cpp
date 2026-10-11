@@ -1,5 +1,6 @@
 #define BIORBD_API_EXPORTS
 #include "InternalForces/WrappingCylinder.h"
+#include "WrappingNumericalKernel.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -30,34 +31,13 @@ void internal_forces::WrappingCylinder::solveLocal(const utils::Vector3d& a,
     (void)a;(void)b;(void)points;(void)arcLength;
     throw std::runtime_error("WrappingCylinder requires the Eigen numerical backend");
 #else
-    const double r=m_radius, half=m_length/2.;
-    // Clip the chord to the cylinder height before checking radial intersection.
-    double lo=0,hi=1;
-    const double dz=b(2)-a(2);
-    if(std::fabs(dz)<1e-15) {
-        if(std::fabs(a(2))>half) return;
-    } else {
-        double t0=(-half-a(2))/dz, t1=(half-a(2))/dz;
-        if(t0>t1) std::swap(t0,t1);
-        lo=std::max(0.,t0);hi=std::min(1.,t1);
-        if(lo>=hi) return;
-    }
-    if(!intersectsEllipse(a(0)+(b(0)-a(0))*lo,a(1)+(b(1)-a(1))*lo,
-        a(0)+(b(0)-a(0))*hi,a(1)+(b(1)-a(1))*hi,r,r)) return;
-    if(std::hypot(a(0),a(1))<r*(1.-1e-12) || std::hypot(b(0),b(1))<r*(1.-1e-12))
-        throw std::runtime_error("Finite-cylinder wrapping requires exterior radial endpoints; rim/cap contact is unsupported");
-    PlanarArc arc=ellipseArc(a(0),a(1),b(0),b(1),r,r);
-    const auto& p=arc.points.front(); const auto& q=arc.points.back();
-    const double freeA=std::hypot(p(0)-a(0),p(1)-a(1));
-    const double freeB=std::hypot(b(0)-q(0),b(1)-q(1));
-    const double total=freeA+arc.length+freeB;
-    const double z1=a(2)+dz*freeA/total, z2=a(2)+dz*(freeA+arc.length)/total;
-    const double tol=1e-10*std::max(r,m_length);
-    if(std::fabs(z1)>half+tol || std::fabs(z2)>half+tol)
-        throw std::runtime_error("Finite-cylinder contact lies beyond the lateral surface; rim/cap contact is unsupported");
-    const int count=static_cast<int>(arc.points.size())-1;
-    for(int i=0;i<=count;++i) arc.points[i](2)=z1+(z2-z1)*i/count;
-    arcLength=std::hypot(arc.length,z2-z1);
-    points.swap(arc.points);
+    biorbd::wrapping::Seed seed;
+    seed.parameters=m_geodesicSeed;
+    if(!seed.parameters.empty()) {seed.start=m_geodesicStart;seed.end=m_geodesicEnd;}
+    const biorbd::wrapping::Shape shape(biorbd::wrapping::Shape::Cylinder,Eigen::Vector3d(m_radius,m_length,0),m_side);
+    const biorbd::wrapping::Contact result=biorbd::wrapping::solveLocal(shape,a,b,&seed);
+    points.clear();for(const auto& point:result.samples) points.push_back(utils::Vector3d(point));
+    arcLength=result.length;
+    m_geodesicSeed=seed.parameters;m_geodesicStart=seed.start;m_geodesicEnd=seed.end;
 #endif
 }

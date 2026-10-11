@@ -68,8 +68,9 @@ elseif(${MATH_LIBRARY_BACKEND} STREQUAL "Casadi")
 endif()
 set (BIORBD_NAME ${PROJECT_NAME}_${BIORBD_LIB_SUFFIX})
 
+# The double-only wrapping kernel uses Eigen privately with both backends.
+find_package(Eigen3 REQUIRED)
 if(${MATH_LIBRARY_BACKEND} STREQUAL "Eigen3")
-    find_package(Eigen3 REQUIRED)
     set(MATH_BACKEND_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}")
     set(MATH_BACKEND_LIBRARIES "")
     find_package(RBDL REQUIRED)
