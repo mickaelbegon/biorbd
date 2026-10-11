@@ -2,6 +2,8 @@
 #include "ModelReader.h"
 
 #include <limits.h>
+#include <cmath>
+#include <memory>
 
 #include "BiorbdModel.h"
 #include "Utils/Error.h"
@@ -58,6 +60,9 @@
     #include "InternalForces/ViaPoint.h"
     #include "InternalForces/PathModifiers.h"
     #include "InternalForces/WrappingHalfCylinder.h"
+    #include "InternalForces/WrappingCylinder.h"
+    #include "InternalForces/WrappingEllipsoid.h"
+    #include "InternalForces/WrappingTorus.h"
     #include "InternalForces/Geometry.h"
 #endif
 
@@ -1268,7 +1273,31 @@ void Reader::readModelFile(
                 bool isRTset(false);
                 bool RTinMatrix(false);
                 double radius(0);
-                double length(0);
+                double length(0), majorRadius(0), minorRadius(0);
+                double radii[3] = {0, 0, 0};
+                bool hasRadius(false), hasLength(false), hasRadii(false);
+                bool hasMajorRadius(false), hasMinorRadius(false), hasSide(false);
+                int wrappingSide(1);
+                utils::String unknownProperty("");
+                utils::String side("");
+                const auto readDimension = [&](double& value) {
+                    utils::Equation expression;
+                    utils::Error::check(file.read(expression), "Missing value for wrapping property " + property_tag);
+                    try {
+                        std::vector<utils::Equation> terms = utils::Equation::splitIntoEquation(expression, variable);
+                        utils::Equation::replaceCste(terms);
+                        for (const auto& term : terms) {
+                            if (term == "(" || term == ")" || term == "e" || term == "/" ||
+                                    term == "*" || term == "+" || term == "-") continue;
+                            std::size_t consumed(0);
+                            std::stod(term, &consumed);
+                            utils::Error::check(consumed == term.size(), "Invalid numeric wrapping value");
+                        }
+                        value = utils::Equation::evaluateEquation(terms);
+                    } catch (const std::exception&) {
+                        utils::Error::raise("Invalid numeric value for wrapping property " + property_tag + ": " + expression);
+                    }
+                };
 
                 // Read file
                 while(file.read(property_tag)
@@ -1300,32 +1329,84 @@ void Reader::readModelFile(
                         isLigament=true;
                         utils::Error::check(!isMuscle, "Wrapping object cannot be define either for ligament and muscle.");
                     } else if (!property_tag.tolower().compare("radius")) {
-                        file.read(radius, variable);
+                        readDimension(radius);
+                        hasRadius = true;
                     } else if (!property_tag.tolower().compare("length")) {
-                        file.read(length, variable);
+                        readDimension(length);
+                        hasLength = true;
+                    } else if (!property_tag.tolower().compare("radii")) {
+                        for (unsigned int i = 0; i < 3; ++i) readDimension(radii[i]);
+                        hasRadii = true;
+                    } else if (!property_tag.tolower().compare("majorradius")) {
+                        readDimension(majorRadius);
+                        hasMajorRadius = true;
+                    } else if (!property_tag.tolower().compare("minorradius")) {
+                        readDimension(minorRadius);
+                        hasMinorRadius = true;
+                    } else if (!property_tag.tolower().compare("wrappingside")) {
+                        utils::Error::check(file.read(side), "Missing wrappingSide value");
+                        hasSide = true;
+                    } else if (unknownProperty.empty()) {
+                        unknownProperty = property_tag;
                     }
                 }
                 utils::Error::check(parent != "", "Parent was not defined");
-                if (!wrapType.tolower().compare("halfcylinder")) {
-                    utils::Error::check(radius > 0.0,
-                                                "Radius must be defined and positive");
+                std::unique_ptr<internal_forces::WrappingObject> wrapping;
+                const utils::String type = wrapType.tolower();
+                if (type == "halfcylinder") {
+                    utils::Error::check(radius > 0.0, "Radius must be defined and positive");
                     utils::Error::check(length >= 0.0, "Length was must be positive");
+                    utils::Error::check(!hasRadii && !hasMajorRadius && !hasMinorRadius,
+                        "halfcylinder does not support radii, majorradius or minorradius");
+                    wrapping.reset(new internal_forces::WrappingHalfCylinder(RT, radius, length, name, parent));
+                } else if (type == "cylinder" || type == "ellipsoid" || type == "torus") {
+                    utils::Error::check(unknownProperty.empty(), "Unknown wrapping property: " + unknownProperty);
+                    if (hasSide) {
+                        utils::Error::check(side == "1" || side == "+1" || side == "-1", "wrappingSide must be +1 or -1");
+                        wrappingSide = side == "-1" ? -1 : 1;
+                    }
+                    if (type == "cylinder") {
+                        utils::Error::check(hasRadius && hasLength, "Cylinder wrapping requires radius and length");
+                        utils::Error::check(!hasRadii && !hasMajorRadius && !hasMinorRadius,
+                            "Cylinder wrapping does not support radii, majorradius or minorradius");
+                        utils::Error::check(std::isfinite(radius) && radius > 0.0 && std::isfinite(length) && length > 0.0,
+                            "Cylinder radius and length must be finite and strictly positive");
+                        wrapping.reset(new internal_forces::WrappingCylinder(RT, radius, length, name, parent));
+                    } else if (type == "ellipsoid") {
+                        utils::Error::check(hasRadii, "Ellipsoid wrapping requires three radii");
+                        utils::Error::check(!hasRadius && !hasLength && !hasMajorRadius && !hasMinorRadius,
+                            "Ellipsoid wrapping only supports radii dimensions");
+                        for (unsigned int i = 0; i < 3; ++i) {
+                            utils::Error::check(std::isfinite(radii[i]) && radii[i] > 0.0,
+                                "Ellipsoid radii must be finite and strictly positive");
+                        }
+                        wrapping.reset(new internal_forces::WrappingEllipsoid(
+                            RT, utils::Vector3d(radii[0], radii[1], radii[2]), name, parent));
+                    } else {
+                        utils::Error::check(hasMajorRadius && hasMinorRadius, "Torus wrapping requires majorradius and minorradius");
+                        utils::Error::check(!hasRadius && !hasLength && !hasRadii,
+                            "Torus wrapping only supports majorradius and minorradius dimensions");
+                        utils::Error::check(std::isfinite(majorRadius) && std::isfinite(minorRadius) &&
+                            minorRadius > 0.0 && majorRadius > minorRadius,
+                            "Torus radii must be finite with majorradius > minorradius > 0");
+                        wrapping.reset(new internal_forces::WrappingTorus(RT, majorRadius, minorRadius, name, parent));
+                    }
+                    static_cast<internal_forces::WrappingSurface&>(*wrapping).setWrappingSide(wrappingSide);
                 } else {
-                    utils::Error::raise("Wrapping type must be defined (choices: 'halfcylinder')");
+                    utils::Error::raise("Wrapping type must be defined (choices: halfcylinder, cylinder, ellipsoid, torus)");
                 }
-                internal_forces::WrappingHalfCylinder cylinder(RT,radius,length,name,parent);
                 if (isMuscle) {
                     idxMuscleGroup = model->getMuscleGroupId(musclegroup);
                     utils::Error::check(idxMuscleGroup!=-1, "No muscle group was provided!");
-                    idxMuscle = model->muscleGroup(static_cast<unsigned int>(idxMuscleGroup)).muscleID(
-                                  muscle);
+                    idxMuscle = model->muscleGroup(static_cast<unsigned int>(idxMuscleGroup)).muscleID(muscle);
                     utils::Error::check(idxMuscle!=-1, "No muscle was provided!");
                     model->muscleGroup(static_cast<unsigned int>(idxMuscleGroup)).muscle(
-                        static_cast<unsigned int>(idxMuscle)).addPathObject(cylinder);
-                 } else if (isLigament) {
+                        static_cast<unsigned int>(idxMuscle)).addPathObject(*wrapping);
+                } else if (isLigament) {
                     idxLigament = model->ligamentID(ligament);
-                    model->ligament(static_cast<unsigned int>(idxLigament)).addPathObject(cylinder);
-                 }
+                    utils::Error::check(idxLigament!=-1, "No ligament was provided!");
+                    model->ligament(static_cast<unsigned int>(idxLigament)).addPathObject(*wrapping);
+                }
             }
         }
     } catch (std::runtime_error message) {

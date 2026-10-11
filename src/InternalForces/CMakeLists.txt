@@ -10,6 +10,11 @@ set(SRC_LIST_MODULE
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingHalfCylinder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingObject.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingSphere.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingSurface.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingGeodesic.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingCylinder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingEllipsoid.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingTorus.cpp"
 )
 
 # Create the library

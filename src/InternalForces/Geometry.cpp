@@ -2,6 +2,9 @@
 
 #include <rbdl/Model.h>
 #include <rbdl/Kinematics.h>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include "Utils/Error.h"
 #include "Utils/Matrix.h"
 #include "Utils/RotoTrans.h"
@@ -10,11 +13,192 @@
 #include "RigidBody/GeneralizedCoordinates.h"
 #include "RigidBody/GeneralizedVelocity.h"
 #include "InternalForces/WrappingObject.h"
+#include "InternalForces/WrappingSurface.h"
+#include "InternalForces/WrappingCylinder.h"
+#include "InternalForces/WrappingEllipsoid.h"
+#include "InternalForces/WrappingTorus.h"
 #include "InternalForces/PathModifiers.h"
 #include "InternalForces/ViaPoint.h"
 #include "InternalForces/Geometry.h"
 
 using namespace BIORBD_NAMESPACE;
+
+#ifndef BIORBD_USE_CASADI_MATH
+namespace {
+// Minimize an implicit surface level on a line segment. A negative result
+// detects penetration, including the two disconnected lobes of a ring torus.
+double surfaceLevelOnSegment(const internal_forces::WrappingSurface& surface,
+    const utils::RotoTrans& rt, const utils::Vector3d& a, const utils::Vector3d& b)
+{
+    Eigen::Vector3d p = rt.block(0,0,3,3).transpose() *
+        (a - rt.block(0,3,3,1));
+    Eigen::Vector3d d = rt.block(0,0,3,3).transpose() * (b-a);
+    if (const internal_forces::WrappingEllipsoid* ellipsoid =
+        dynamic_cast<const internal_forces::WrappingEllipsoid*>(&surface)) {
+        p = p.cwiseQuotient(ellipsoid->radii());
+        d = d.cwiseQuotient(ellipsoid->radii());
+        const double t = d.squaredNorm() == 0 ? 0 :
+            std::max(0.,std::min(1.,-p.dot(d)/d.squaredNorm()));
+        return (p+t*d).squaredNorm()-1.;
+    }
+    if (const internal_forces::WrappingCylinder* cylinder =
+        dynamic_cast<const internal_forces::WrappingCylinder*>(&surface)) {
+        double lo=0., hi=1.;
+        const double half=cylinder->length()/2.;
+        if (std::abs(d[2]) < 1e-15) {
+            if (std::abs(p[2]) > half) return 1.;
+        } else {
+            double t1=(-half-p[2])/d[2], t2=(half-p[2])/d[2];
+            if(t1>t2) std::swap(t1,t2);
+            lo=std::max(lo,t1); hi=std::min(hi,t2);
+            if(lo>hi) return 1.;
+        }
+        const double dd=d.head<2>().squaredNorm();
+        const double t=dd == 0 ? lo :
+            std::max(lo,std::min(hi,-p.head<2>().dot(d.head<2>())/dd));
+        return (p+t*d).head<2>().squaredNorm()/
+            (cylinder->radius()*cylinder->radius())-1.;
+    }
+    const internal_forces::WrappingTorus* torus =
+        dynamic_cast<const internal_forces::WrappingTorus*>(&surface);
+    utils::Error::check(torus != nullptr,"Unknown wrapping surface");
+    const double R=torus->majorRadius(), r=torus->minorRadius();
+    const double aa=d.squaredNorm(), bb=2*p.dot(d);
+    const double cc=p.squaredNorm()+R*R-r*r;
+    const double c[5]={cc*cc-4*R*R*p.head<2>().squaredNorm(),
+        2*bb*cc-8*R*R*p.head<2>().dot(d.head<2>()),
+        bb*bb+2*aa*cc-4*R*R*d.head<2>().squaredNorm(),
+        2*aa*bb,aa*aa};
+    const auto value=[&](double t) {
+        return ((((c[4]*t+c[3])*t+c[2])*t+c[1])*t+c[0]);
+    };
+    const auto derivative=[&](double t) {
+        return (((4*c[4]*t+3*c[3])*t+2*c[2])*t+c[1]);
+    };
+    std::vector<double> cuts{0.,1.};
+    // Turning points of the cubic derivative split it into monotone intervals.
+    const double qa=12*c[4], qb=6*c[3], qc=2*c[2];
+    if(qa != 0) {
+        const double disc=qb*qb-4*qa*qc;
+        if(disc>=0) {
+            const double delta=std::sqrt(disc);
+            for(double t : {(-qb-delta)/(2*qa),(-qb+delta)/(2*qa)})
+                if(t>0 && t<1) cuts.push_back(t);
+        }
+    } else if(qb != 0) {
+        const double t=-qc/qb;
+        if(t>0 && t<1) cuts.push_back(t);
+    }
+    std::sort(cuts.begin(),cuts.end());
+    double result=std::min(value(0),value(1));
+    for(size_t i=0;i<cuts.size();++i) {
+        result=std::min(result,value(cuts[i]));
+        if(i+1==cuts.size()) break;
+        double lo=cuts[i],hi=cuts[i+1],flo=derivative(lo),fhi=derivative(hi);
+        if((flo<0 && fhi>0) || (flo>0 && fhi<0)) {
+            for(int j=0;j<70;++j) {
+                const double mid=(lo+hi)/2.,fm=derivative(mid);
+                if((flo<=0 && fm<=0) || (flo>=0 && fm>=0)) {lo=mid;flo=fm;}
+                else hi=mid;
+            }
+            result=std::min(result,value((lo+hi)/2.));
+        }
+    }
+    return result/std::pow(R+r,4);
+}
+
+struct SurfaceContact {
+    internal_forces::WrappingSurface* surface;
+    utils::RotoTrans rt;
+    utils::Vector3d entry,exit;
+    double length;
+    bool active;
+    std::vector<utils::Vector3d> samples;
+};
+
+void solveSurfaceRegion(std::vector<SurfaceContact>& contacts,
+    const utils::Vector3d& start,const utils::Vector3d& end)
+{
+    for(SurfaceContact& c : contacts) {
+        c.entry=start;c.exit=end;c.length=0;c.active=false;c.samples.clear();
+    }
+    // Bootstrap only multi-object regions. These provisional planar contacts
+    // supply neighbours before the first true solve; they are never delivered.
+    // In particular, a standalone geodesic branch can lose continuation while
+    // the shorter coupled branch remains well defined.
+    if(contacts.size()>1) for(SurfaceContact& c : contacts) {
+        utils::Vector3d a=start,b=end;
+        const internal_forces::WrappingEllipsoid* ellipsoid=
+            dynamic_cast<const internal_forces::WrappingEllipsoid*>(c.surface);
+        const internal_forces::WrappingTorus* torus=
+            dynamic_cast<const internal_forces::WrappingTorus*>(c.surface);
+        if(ellipsoid || torus) {
+            a.applyRT(c.rt.transpose());b.applyRT(c.rt.transpose());
+            a(2)=b(2)=0.;
+            if(ellipsoid) {
+                const auto& r=ellipsoid->radii();
+                if(std::hypot(a(0)/r(0),a(1)/r(1))<1. ||
+                    std::hypot(b(0)/r(0),b(1)/r(1))<1.) continue;
+            } else {
+                const double outer=torus->majorRadius()+torus->minorRadius();
+                if(std::hypot(a(0),a(1))<outer || std::hypot(b(0),b(1))<outer) continue;
+            }
+            a.applyRT(c.rt);b.applyRT(c.rt);
+        }
+        try {
+            utils::Vector3d p,q;utils::Scalar length=0;
+            c.surface->wrapPoints(c.rt,a,b,p,q,&length);
+            if(c.surface->isActive()) {
+                c.entry=p;c.exit=q;c.length=length;c.active=true;
+                c.samples=c.surface->surfacePoints();
+            }
+        } catch(const std::invalid_argument&) {
+            // An inadmissible optional guess leaves this object inactive.
+        } catch(const std::runtime_error&) {
+            // The strict solve below still propagates every true solve failure.
+        }
+    }
+    bool converged=false;
+    const double tolerance=1e-10*std::max(1.,(end-start).norm());
+    for(unsigned int iteration=0;iteration<200;++iteration) {
+        double change=0.;bool changedActive=false;
+        for(size_t i=0;i<contacts.size();++i) {
+            utils::Vector3d a=start,b=end;
+            for(size_t j=i;j>0;--j) if(contacts[j-1].active) {a=contacts[j-1].exit;break;}
+            for(size_t j=i+1;j<contacts.size();++j) if(contacts[j].active) {b=contacts[j].entry;break;}
+            SurfaceContact& c=contacts[i];
+            utils::Vector3d p,q;utils::Scalar length=0;
+            c.surface->wrapPoints(c.rt,a,b,p,q,&length);
+            const bool active=c.surface->isActive();
+            changedActive=changedActive || active!=c.active;
+            if(active) change=std::max(change,std::max((p-c.entry).norm(),(q-c.exit).norm()));
+            change=std::max(change,std::abs(length-c.length));
+            c.entry=p;c.exit=q;c.length=length;c.active=active;
+            c.samples=c.surface->surfacePoints();
+        }
+        if(!changedActive && change<=tolerance) {converged=true;break;}
+    }
+    utils::Error::check(converged,"Coupled wrapping contacts did not converge");
+    // Verify free segments against every associated solid. Verify sampled
+    // contact curves against the other objects; intersecting configurations
+    // are rejected rather than silently accepted as feasible trajectories.
+    utils::Vector3d previous=start;
+    const auto checkLine=[&](const utils::Vector3d& a,const utils::Vector3d& b,
+                            const internal_forces::WrappingSurface* owner) {
+        for(const SurfaceContact& other : contacts) if(other.surface!=owner)
+            utils::Error::check(surfaceLevelOnSegment(*other.surface,other.rt,a,b)>=-1e-8,
+                "Wrapping trajectory intersects another object; this contact configuration is unsupported");
+    };
+    for(const SurfaceContact& c : contacts) if(c.active) {
+        checkLine(previous,c.entry,nullptr);
+        for(size_t i=1;i<c.samples.size();++i)
+            checkLine(c.samples[i-1],c.samples[i],c.surface);
+        previous=c.exit;
+    }
+    checkLine(previous,end,nullptr);
+}
+}
+#endif
 
 internal_forces::Geometry::Geometry() :
     m_origin(std::make_shared<utils::Vector3d>()),
@@ -25,6 +209,10 @@ internal_forces::Geometry::Geometry() :
                         (utils::Vector3d::Zero())),
     m_pointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
     m_pointsInLocal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_pathPointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_surfaceSegmentLengths(std::make_shared<std::vector<utils::Scalar>>()),
+    m_surfaceSegments(std::make_shared<std::vector<bool>>()),
+    m_surfacePath(std::make_shared<bool>(false)),
     m_jacobian(std::make_shared<utils::Matrix>()),
     m_G(std::make_shared<utils::Matrix>()),
     m_jacobianLength(std::make_shared<utils::Matrix>()),
@@ -48,6 +236,10 @@ internal_forces::Geometry::Geometry(
                         (utils::Vector3d::Zero())),
     m_pointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
     m_pointsInLocal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_pathPointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_surfaceSegmentLengths(std::make_shared<std::vector<utils::Scalar>>()),
+    m_surfaceSegments(std::make_shared<std::vector<bool>>()),
+    m_surfacePath(std::make_shared<bool>(false)),
     m_jacobian(std::make_shared<utils::Matrix>()),
     m_G(std::make_shared<utils::Matrix>()),
     m_jacobianLength(std::make_shared<utils::Matrix>()),
@@ -82,6 +274,10 @@ void internal_forces::Geometry::DeepCopy(const internal_forces::Geometry &other)
         (*m_pointsInLocal)[i] = (*other.m_pointsInLocal)[i].DeepCopy();
     }
     *m_jacobian = *other.m_jacobian;
+    *m_pathPointsInGlobal = *other.m_pathPointsInGlobal;
+    *m_surfaceSegmentLengths = *other.m_surfaceSegmentLengths;
+    *m_surfaceSegments = *other.m_surfaceSegments;
+    *m_surfacePath = *other.m_surfacePath;
     *m_G = *other.m_G;
     *m_jacobianLength = *other.m_jacobianLength;
     *m_length = *other.m_length;
@@ -228,6 +424,12 @@ const std::vector<utils::Vector3d>
 }
 
 // Return the length and muscular velocity
+const std::vector<utils::Vector3d>& internal_forces::Geometry::pathPointsInGlobal() const
+{
+    utils::Error::check(*m_isGeometryComputed,"Geometry must be computed before reading the trajectory");
+    return *m_surfacePath ? *m_pathPointsInGlobal : *m_pointsInGlobal;
+}
+
 const utils::Scalar& internal_forces::Geometry::length() const
 {
     utils::Error::check(*m_isGeometryComputed,
@@ -320,6 +522,12 @@ const utils::Vector3d &internal_forces::Geometry::insertionInGlobal(
 void internal_forces::Geometry::setPointsInGlobal(
     std::vector<utils::Vector3d> &ptsInGlobal)
 {
+    *m_isGeometryComputed = false;
+    *m_isVelocityComputed = false;
+    *m_surfacePath = false;
+    m_surfaceSegments->clear();
+    m_surfaceSegmentLengths->clear();
+    m_pathPointsInGlobal->clear();
     utils::Error::check(ptsInGlobal.size() >= 2,
                                 "ptsInGlobal must at least have an origin and an insertion");
     m_pointsInLocal->clear(); // In this mode, we don't need the local, because the Jacobian of the points has to be given as well
@@ -331,9 +539,98 @@ void internal_forces::Geometry::setPointsInGlobal(
     const rigidbody::GeneralizedCoordinates &Q,
     internal_forces::PathModifiers *pathModifiers)
 {
+    *m_isGeometryComputed = false;
+    *m_isVelocityComputed = false;
     // Output varible (reset to zero)
     m_pointsInLocal->clear();
     m_pointsInGlobal->clear();
+
+    *m_surfacePath = false;
+    m_pathPointsInGlobal->clear();
+    m_surfaceSegments->clear();
+    m_surfaceSegmentLengths->clear();
+    if(pathModifiers==nullptr || pathModifiers->nbObjects()==0) {
+        m_pointsInLocal->push_back(originInLocal());
+        m_pointsInLocal->push_back(insertionInLocal());
+        m_pointsInGlobal->push_back(originInGlobal(model,Q));
+        m_pointsInGlobal->push_back(insertionInGlobal(model,Q));
+        setJacobianDimension(model);
+        return;
+    }
+    bool hasSurface=false;
+    for(unsigned int i=0;i<pathModifiers->nbObjects();++i)
+        hasSurface=hasSurface || dynamic_cast<WrappingSurface*>(&pathModifiers->object(i))!=nullptr;
+    if(hasSurface) {
+#ifdef BIORBD_USE_CASADI_MATH
+        utils::Error::raise("New wrapping surfaces currently require the Eigen numerical backend; symbolic contact solving is not implemented");
+#else
+        *m_surfacePath=true;
+        const utils::Vector3d start=originInGlobal(model,Q);
+        const utils::Vector3d finish=insertionInGlobal(model,Q);
+        m_pointsInLocal->push_back(originInLocal());
+        m_pointsInGlobal->push_back(start);
+        m_pathPointsInGlobal->push_back(start);
+        std::vector<SurfaceContact> region, allContacts;
+        utils::Vector3d regionStart=start;
+        const auto appendNode=[&](const utils::Vector3d& global,
+            const utils::Vector3d& local,bool arc,double arcLength) {
+            m_pointsInGlobal->push_back(global);
+            m_pointsInLocal->push_back(local);
+            m_surfaceSegments->push_back(arc);
+            m_surfaceSegmentLengths->push_back(arcLength);
+        };
+        const auto appendRegion=[&](const utils::Vector3d& end,const utils::Vector3d& localEnd) {
+            solveSurfaceRegion(region,regionStart,end);
+            for(const SurfaceContact& c : region) if(c.active) {
+                const unsigned int body=model.GetBodyId(c.surface->parent().c_str());
+                const utils::Vector3d localEntry(RigidBodyDynamics::CalcBaseToBodyCoordinates(
+                    model,Q,body,c.entry,false),"wrap_entry",c.surface->parent());
+                const utils::Vector3d localExit(RigidBodyDynamics::CalcBaseToBodyCoordinates(
+                    model,Q,body,c.exit,false),"wrap_exit",c.surface->parent());
+                appendNode(c.entry,localEntry,false,0.);
+                appendNode(c.exit,localExit,true,c.length);
+                m_pathPointsInGlobal->insert(m_pathPointsInGlobal->end(),c.samples.begin(),c.samples.end());
+            }
+            appendNode(end,localEnd,false,0.);
+            m_pathPointsInGlobal->push_back(end);
+            allContacts.insert(allContacts.end(),region.begin(),region.end());
+            region.clear();regionStart=end;
+        };
+        for(unsigned int i=0;i<pathModifiers->nbObjects();++i) {
+            utils::Vector3d& object=pathModifiers->object(i);
+            if(object.typeOfNode()==utils::NODE_TYPE::VIA_POINT) {
+                const utils::Vector3d global(RigidBodyDynamics::CalcBodyToBaseCoordinates(
+                    model,Q,model.GetBodyId(object.parent().c_str()),object,false));
+                appendRegion(global,object);
+            } else {
+                WrappingSurface* surface=dynamic_cast<WrappingSurface*>(&object);
+                utils::Error::check(surface!=nullptr,
+                    "Legacy wrapping objects cannot yet be combined with the new surface solver");
+                SurfaceContact contact;
+                contact.surface=surface;contact.rt=surface->RT(model,Q,false);
+                contact.active=false;contact.length=0.;
+                region.push_back(contact);
+            }
+        }
+        appendRegion(finish,insertionInLocal());
+        // Via points fix the anatomical order, but every solid constrains the
+        // complete path, including the regions on either side of a via point.
+        const auto checkAllObjects=[&](const utils::Vector3d& a,const utils::Vector3d& b,
+            const WrappingSurface* owner) {
+            for(const SurfaceContact& c : allContacts) if(c.surface!=owner)
+                utils::Error::check(surfaceLevelOnSegment(*c.surface,c.rt,a,b)>=-1e-8,
+                    "Wrapping trajectory crosses an object outside its assigned via-point region");
+        };
+        for(size_t i=0;i<m_surfaceSegments->size();++i)
+            if(!(*m_surfaceSegments)[i])
+                checkAllObjects((*m_pointsInGlobal)[i],(*m_pointsInGlobal)[i+1],nullptr);
+        for(const SurfaceContact& c : allContacts) if(c.active)
+            for(size_t i=1;i<c.samples.size();++i)
+                checkAllObjects(c.samples[i-1],c.samples[i],c.surface);
+        setJacobianDimension(model);
+        return;
+#endif
+    }
 
     // Do not apply on wrapping objects
     if (pathModifiers->nbWraps()!=0) {
@@ -415,6 +712,13 @@ const utils::Scalar& internal_forces::Geometry::length(
 {
     *m_length = 0;
 
+    if(*m_surfacePath) {
+        for(size_t i=0;i<m_surfaceSegments->size();++i)
+            *m_length += (*m_surfaceSegments)[i] ? (*m_surfaceSegmentLengths)[i] :
+                ((*m_pointsInGlobal)[i+1]-(*m_pointsInGlobal)[i]).norm();
+        return *m_length;
+    }
+
     // because we can't combine, test the first (0) will let us know all the types if more than one
     if (pathModifiers != nullptr && pathModifiers->nbWraps()!=0) {
         utils::Error::check(pathModifiers->nbVia() == 0,
@@ -485,6 +789,13 @@ void internal_forces::Geometry::computeJacobianLength()
     // jacobian approximates as if there were no wrapping object
     const std::vector<utils::Vector3d>& p = *m_pointsInGlobal;
     for (unsigned int i=0; i<p.size()-1 ; ++i) {
+        // At a stationary frictionless contact path, sliding-contact terms
+        // cancel by tangency. Surface arc lengths are invariant under rigid
+        // object motion, so only free-segment material velocities contribute.
+        if(*m_surfacePath && (*m_surfaceSegments)[i]) continue;
+#ifndef BIORBD_USE_CASADI_MATH
+        if((p[i+1]-p[i]).norm() <= 1e-14) continue;
+#endif
         *m_jacobianLength += (( p[i+1] - p[i] ).transpose() * (jacobian(i+1) - jacobian(
                                   i)))
                              /

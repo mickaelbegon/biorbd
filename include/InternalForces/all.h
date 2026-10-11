@@ -9,6 +9,10 @@
 #include "InternalForces/WrappingHalfCylinder.h"
 #include "InternalForces/WrappingObject.h"
 #include "InternalForces/WrappingSphere.h"
+#include "InternalForces/WrappingSurface.h"
+#include "InternalForces/WrappingCylinder.h"
+#include "InternalForces/WrappingEllipsoid.h"
+#include "InternalForces/WrappingTorus.h"
 
 #endif // BIORBD_INTERNAL_FORCES_ALL_H
 

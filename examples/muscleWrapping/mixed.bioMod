@@ -1,0 +1,74 @@
+version 4
+
+segment base
+    RTinMatrix 1
+    RT
+        1 0 0 0
+        0 1 0 0
+        0 0 1 0
+        0 0 0 1
+endsegment
+
+musclegroup path
+    OriginParent base
+    InsertionParent base
+endmusclegroup
+
+muscle route
+    Type hill
+    musclegroup path
+    OriginPosition -0.23112732350501602 0.001328022550565397 -0.010168416076895006
+    InsertionPosition 0.22635274836438973 -0.046755070552555199 -0.010168416076895006
+    optimalLength 0.5
+    maximalForce 100
+    tendonSlackLength 0.01
+    pennationAngle 0
+    maxVelocity 10
+endmuscle
+
+wrapping obstacle-1
+    parent base
+    muscle route
+    musclegroup path
+    type ellipsoid
+    RTinMatrix 1
+    RT
+        0.99452189536827329 0.095491502812526288 -0.04251555625535746 -0.11934262744419279
+        -0.10452846326765347 0.90854096003979601 -0.40450849718747367 0.012543415592118416
+        0 0.40673664307580021 0.91354545764260087 0
+        0 0 0 1
+    radii 0.048000000000000001 0.032000000000000001 0.043999999999999997
+    wrappingSide 1
+endwrapping
+
+wrapping obstacle-2
+    parent base
+    muscle route
+    musclegroup path
+    type cylinder
+    RTinMatrix 1
+    RT
+        0.99452189536827329 0.095491502812526288 -0.04251555625535746 0.0016233555478129471
+        -0.10452846326765347 0.90854096003979601 -0.40450849718747367 0.015445196320676534
+        0 0.40673664307580021 0.91354545764260087 0.0069145229322886042
+        0 0 0 1
+    radius 0.034000000000000002
+    length 0.10000000000000001
+    wrappingSide 1
+endwrapping
+
+wrapping obstacle-3
+    parent base
+    muscle route
+    musclegroup path
+    type torus
+    RTinMatrix 1
+    RT
+        0.99452189536827329 0.095491502812526288 -0.04251555625535746 0.11934262744419279
+        -0.10452846326765347 0.90854096003979601 -0.40450849718747367 -0.012543415592118416
+        0 0.40673664307580021 0.91354545764260087 0
+        0 0 0 1
+    majorradius 0.029999999999999999
+    minorradius 0.014999999999999999
+    wrappingSide 1
+endwrapping
