@@ -57,6 +57,7 @@ set(TEST_SRC_FILES
     "${CMAKE_SOURCE_DIR}/test/test_rigidbody.cpp"
     "${CMAKE_SOURCE_DIR}/test/test_utils.cpp"
     "${CMAKE_SOURCE_DIR}/test/test_wrapping.cpp"
+    "${CMAKE_SOURCE_DIR}/test/test_wrapping_hybrid.cpp"
     "${CMAKE_SOURCE_DIR}/test/test_wrapping_casadi.cpp"
 )
 if(MODULE_MUSCLES)
@@ -80,8 +81,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${BIORBD_BINARY_DIR}/include"
     "${RBDL_INCLUDE_DIR}"
     "${MATH_BACKEND_INCLUDE_DIR}"
+    "${EIGEN3_INCLUDE_DIR}"
     "${IPOPT_INCLUDE_DIR}"
 )
+
+if(TARGET Eigen3::Eigen)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 
 # Standard linking to gtest stuff.
 target_link_libraries(${PROJECT_NAME}

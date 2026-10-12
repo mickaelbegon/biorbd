@@ -24,6 +24,9 @@ struct Region {
 struct Seed {
     std::vector<double> parameters; ///< Contact angles and log normalized arc length.
     Eigen::Vector3d start,end; ///< Previous local endpoints. State is owned by value.
+    Shape::Kind kind;
+    int side; ///< Zero means that this legacy seed has no descriptor stamp.
+    Eigen::Vector3d dimensions; ///< Descriptor stamp; invalidates seeds on shape changes.
     Seed();
 };
 struct Contact {
@@ -33,8 +36,12 @@ struct Contact {
     double length; ///< Surface arc only. Samples/contacts use the caller's frame.
     Contact();
 };
+enum class RegionSolver { Analytical, NativeGeodesic, Scholz2015, NativeFallback, NativeWarm };
+/// Whether this library was built with the optional Simbody Scholz2015 adapter.
+bool ngvAvailable();
 struct PathResult {
     double length;
+    std::vector<RegionSolver> regionSolvers; ///< Accepted route for each Region.
     std::vector<Contact> contacts; ///< One result per Object, including inactive objects.
     std::vector<Eigen::Vector3d> anchorGradients; ///< start0,end0,start1,end1,...
     std::vector<Eigen::Matrix4d> poseGradients; ///< Only the upper 3x4 block is used.

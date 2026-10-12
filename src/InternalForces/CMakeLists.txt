@@ -13,6 +13,7 @@ set(SRC_LIST_MODULE
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingSurface.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingGeodesic.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingNumericalKernel.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/WrappingNgv.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingCylinder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingEllipsoid.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/WrappingTorus.cpp"
@@ -51,12 +52,16 @@ if(TARGET Eigen3::Eigen)
 endif()
 
 # Add the dependencies for insuring build order
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
     "${RBDL_LIBRARY}"
     "${MATH_BACKEND_LIBRARIES}"
     "${BIORBD_NAME}_utils"
     "${BIORBD_NAME}_rigidbody"
 )
+if(BIORBD_WITH_SIMBODY_WRAPPING)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BIORBD_WITH_SIMBODY_WRAPPING=1)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SimTKsimbody)
+endif()
 add_dependencies(${PROJECT_NAME}
     "${BIORBD_NAME}_utils"
     "${BIORBD_NAME}_rigidbody"

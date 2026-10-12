@@ -40,6 +40,10 @@ public:
     const utils::RotoTrans& RT(rigidbody::Joints& model,
                     const rigidbody::GeneralizedCoordinates& Q, bool updateKin = true) override;
 
+private:
+    // Geometry publishes a complete accepted kernel result into these caches.
+    friend class Geometry;
+
 protected:
     void DeepCopy(const WrappingSurface& other);
     virtual void solveLocal(const utils::Vector3d& a, const utils::Vector3d& b,

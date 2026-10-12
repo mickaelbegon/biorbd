@@ -1,4 +1,5 @@
 #include "WrappingNumericalKernel.h"
+#include "WrappingNgv.h"
 #include "WrappingGeodesic.h"
 #include <Eigen/Geometry>
 #include <algorithm>
@@ -467,7 +468,8 @@ Object::Object(const Shape& shape_,const Eigen::Matrix4d& pose_):shape(shape_),p
         (pose.row(3)-Eigen::RowVector4d(0,0,0,1)).norm()>1e-12)
         throw std::invalid_argument("Wrapping pose must be a finite proper rigid transform");
 }
-Seed::Seed():start(Eigen::Vector3d::Zero()),end(Eigen::Vector3d::Zero()) {}
+Seed::Seed():start(Eigen::Vector3d::Zero()),end(Eigen::Vector3d::Zero()),
+    kind(Shape::Cylinder),side(0),dimensions(Eigen::Vector3d::Zero()) {}
 Contact::Contact():active(false),entry(Eigen::Vector3d::Zero()),exit(Eigen::Vector3d::Zero()),length(0) {}
 Contact solveLocal(const Shape& shape,const Eigen::Vector3d& a,const Eigen::Vector3d& b,Seed* seed)
 {
@@ -545,11 +547,321 @@ void solveRegion(const std::vector<Object>& objects,const Region& region,
     }
     if(!converged) throw std::runtime_error("Coupled wrapping contacts did not converge");
 }
+// Preserve the native activation policy, including each primitive's original
+// boundary tolerance. A hint must not retain a contact when its neighbour
+// chord is already clear (notably on a non-convex ring torus).
+bool chordRequiresContact(const Object& object,const Eigen::Vector3d& start,const Eigen::Vector3d& end)
+{
+    const Eigen::Vector3d a=toLocal(object,start),b=toLocal(object,end);
+    const Shape& shape=object.shape;
+    if(shape.kind==Shape::Torus) return torusChordIntersects(a,b,shape.dimensions[0],shape.dimensions[1]);
+    if(shape.kind==Shape::Ellipsoid) {
+        const Eigen::Vector3d p=a.cwiseQuotient(shape.dimensions),d=(b-a).cwiseQuotient(shape.dimensions);
+        const double t=d.squaredNorm()>0?std::max(0.,std::min(1.,-p.dot(d)/d.squaredNorm())):0.;
+        return (p+t*d).squaredNorm()<1.-1e-12;
+    }
+    double lo=0,hi=1;const double half=shape.dimensions[1]/2.,dz=b[2]-a[2];
+    if(std::abs(dz)<1e-15) {if(std::abs(a[2])>half) return false;}
+    else {
+        double t0=(-half-a[2])/dz,t1=(half-a[2])/dz;if(t0>t1)std::swap(t0,t1);
+        lo=std::max(0.,t0);hi=std::min(1.,t1);if(lo>=hi)return false;
+    }
+    const double r=shape.dimensions[0];
+    return LocalSolver::intersectsEllipse(a[0]+(b[0]-a[0])*lo,a[1]+(b[1]-a[1])*lo,
+        a[0]+(b[0]-a[0])*hi,a[1]+(b[1]-a[1])*hi,r,r);
+}
+void validateRegionEndpoints(const std::vector<Object>& objects,const Region& region)
+{
+    for(std::size_t index:region.objects) {
+        const Object& object=objects[index];const Shape& shape=object.shape;
+        for(const Eigen::Vector3d* endpoint:{&region.start,&region.end}) {
+            const Eigen::Vector3d p=toLocal(object,*endpoint);
+            if(shape.kind==Shape::Ellipsoid && p.cwiseQuotient(shape.dimensions).squaredNorm()<1.-1e-12)
+                throw std::invalid_argument("WrappingEllipsoid endpoint lies inside the surface");
+            if(shape.kind==Shape::Torus && std::hypot(std::hypot(p[0],p[1])-shape.dimensions[0],p[2])<shape.dimensions[1]*(1.-1e-12))
+                throw std::invalid_argument("WrappingTorus endpoint lies inside the tube");
+            if(shape.kind==Shape::Cylinder && std::abs(p[2])<shape.dimensions[1]/2. &&
+                std::hypot(p[0],p[1])<shape.dimensions[0]*(1.-1e-12))
+                throw std::runtime_error("Finite-cylinder wrapping requires exterior radial endpoints; rim/cap contact is unsupported");
+        }
+    }
+}
+bool singleAnalytical(const Object& object,const Region& region)
+{
+    const Shape& shape=object.shape;if(shape.kind==Shape::Cylinder)return true;
+    const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+    if(shape.kind==Shape::Ellipsoid) {
+        const double scale=std::max(shape.dimensions.maxCoeff(),std::max(a.cwiseAbs().maxCoeff(),b.cwiseAbs().maxCoeff()));
+        for(int i=0;i<3;++i)if(std::abs(a[i])<=1e-10*scale && std::abs(b[i])<=1e-10*scale)return true;
+        return false;
+    }
+    const double R=shape.dimensions[0],r=shape.dimensions[1];
+    const double tol=1e-10*std::max(R,std::max(a.norm(),b.norm()));
+    const double ra=std::hypot(a[0],a[1]),rb=std::hypot(b[0],b[1]);
+    if(std::abs(a[2])<=tol && std::abs(b[2])<=tol && ra>=R+r-tol && rb>=R+r-tol)return true;
+    Eigen::Vector2d axis(1,0);if(ra>tol)axis=a.head<2>()/ra;else if(rb>tol)axis=b.head<2>()/rb;
+    return std::abs(a[0]*axis[1]-a[1]*axis[0])<=tol && std::abs(b[0]*axis[1]-b[1]*axis[0])<=tol;
+}
+bool parallel(const Eigen::Vector3d& a,const Eigen::Vector3d& b)
+{return a.cross(b).norm()<=1e-10;}
+bool commonAnalyticalPlane(const std::vector<Object>& objects,const Region& region)
+{
+    std::vector<Eigen::Vector3d> candidates;
+    for(std::size_t index:region.objects) {
+        const Object& object=objects[index];
+        if(!singleAnalytical(object,region))return false;
+        const Eigen::Matrix3d rotation=object.pose.block<3,3>(0,0);
+        for(int i=0;i<3;++i)candidates.push_back(rotation.col(i));
+        if(object.shape.kind==Shape::Torus) {
+            const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+            const double tol=1e-10*std::max(object.shape.dimensions[0],std::max(a.norm(),b.norm()));
+            const double ra=std::hypot(a[0],a[1]),rb=std::hypot(b[0],b[1]);
+            Eigen::Vector2d axis(1,0);
+            if(ra>tol)axis=a.head<2>()/ra;else if(rb>tol)axis=b.head<2>()/rb;
+            candidates.push_back(rotation*Eigen::Vector3d(-axis[1],axis[0],0));
+        }
+    }
+    for(const Eigen::Vector3d& normal:candidates) {
+        bool coplanar=true;
+        for(std::size_t index:region.objects) {
+            const Object& object=objects[index];const Eigen::Matrix3d rotation=object.pose.block<3,3>(0,0);
+            const Eigen::Vector3d centre=object.pose.block<3,1>(0,3);
+            const double scale=std::max(object.shape.dimensions.maxCoeff(),std::max((region.start-centre).norm(),(region.end-centre).norm()));
+            if(std::abs(normal.dot(region.start-centre))>1e-10*scale || std::abs(normal.dot(region.end-centre))>1e-10*scale) {coplanar=false;break;}
+            bool supported=false;
+            if(object.shape.kind==Shape::Cylinder)supported=parallel(normal,rotation.col(2));
+            else if(object.shape.kind==Shape::Ellipsoid) {
+                const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+                const double localScale=std::max(object.shape.dimensions.maxCoeff(),std::max(a.cwiseAbs().maxCoeff(),b.cwiseAbs().maxCoeff()));
+                // Match solveLocal's actual preference: XY, then XZ, then YZ.
+                // An endpoint on a principal axis does not select every plane.
+                for(int i=2;i>=0;--i)if(std::abs(a[i])<=1e-10*localScale && std::abs(b[i])<=1e-10*localScale) {
+                    supported=parallel(normal,rotation.col(i));break;
+                }
+            } else {
+                const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+                const double R=object.shape.dimensions[0],r=object.shape.dimensions[1];
+                const double tol=1e-10*std::max(R,std::max(a.norm(),b.norm()));
+                const double ra=std::hypot(a[0],a[1]),rb=std::hypot(b[0],b[1]);
+                // The native torus chooses the exterior equator first; otherwise
+                // it uses the meridian fixed by the first non-axial endpoint.
+                if(std::abs(a[2])<=tol && std::abs(b[2])<=tol && ra>=R+r-tol && rb>=R+r-tol)
+                    supported=parallel(normal,rotation.col(2));
+                else {
+                    Eigen::Vector2d axis(1,0);
+                    if(ra>tol)axis=a.head<2>()/ra;else if(rb>tol)axis=b.head<2>()/rb;
+                    supported=parallel(normal,rotation*Eigen::Vector3d(-axis[1],axis[0],0));
+                }
+            }
+            if(!supported) {coplanar=false;break;}
+        }
+        if(coplanar)return true;
+    }
+    return false;
+}
+bool analyticalRegion(const std::vector<Object>& objects,const Region& region)
+{
+    if(region.objects.size()<=1)return region.objects.empty()||singleAnalytical(objects[region.objects.front()],region);
+    // Every cylinder uses its exact developed-surface helix, also when the
+    // axes differ. Integrated model measurements favour the native sweeps.
+    bool cylinders=true;
+    for(std::size_t index:region.objects)cylinders=cylinders && objects[index].shape.kind==Shape::Cylinder;
+    return cylinders||commonAnalyticalPlane(objects,region);
+}
+// Cold NGV guesses come only from geometric tangent branches. No prior solution
+// or fixture data enters this initializer. The side convention is inherited
+// from LocalSolver::ellipseArc, including z for a torus meridian.
+Eigen::Vector3d geometricHint(const Object& object,const Region& region)
+{
+    const Shape& shape=object.shape;const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+    Seed seed;LocalSolver solver(shape,seed);
+    if(shape.kind==Shape::Cylinder) {
+        const double r=shape.dimensions[0],half=shape.dimensions[1]/2.;
+        const double z=std::max(-half,std::min(half,(a[2]+b[2])/2.));
+        const auto arc=solver.ellipseArc(a[0],a[1],b[0],b[1],r,r);
+        const double angle=arc.entry+arc.sweep/2.;return Eigen::Vector3d(r*std::cos(angle),r*std::sin(angle),z);
+    }
+    if(shape.kind==Shape::Ellipsoid) {
+        Eigen::Vector3d pa=a,pb=b;pa[2]=pb[2]=0;
+        Eigen::Quaterniond rotation=Eigen::Quaterniond::Identity();bool rotated=false;
+        if(pa.cwiseQuotient(shape.dimensions).norm()<1.+1e-8 || pb.cwiseQuotient(shape.dimensions).norm()<1.+1e-8) {
+            const Eigen::Vector3d sa=a.cwiseQuotient(shape.dimensions),sb=b.cwiseQuotient(shape.dimensions);
+            Eigen::Vector3d normal=sa.cross(sb);
+            if(normal.norm()<1e-8)normal=sa.cross(Eigen::Vector3d::UnitY());
+            if(normal.norm()<1e-8)normal=sa.cross(Eigen::Vector3d::UnitX());
+            normal.normalize();if(normal[2]<0)normal=-normal;
+            rotation=Eigen::Quaterniond::FromTwoVectors(normal,Eigen::Vector3d::UnitZ());
+            pa=(rotation*sa).cwiseProduct(shape.dimensions);pb=(rotation*sb).cwiseProduct(shape.dimensions);
+            pa[2]=pb[2]=0;rotated=true;
+        }
+        const auto arc=solver.ellipseArc(pa[0],pa[1],pb[0],pb[1],shape.dimensions[0],shape.dimensions[1]);
+        const double angle=arc.entry+arc.sweep/2.;Eigen::Vector3d point(shape.dimensions[0]*std::cos(angle),shape.dimensions[1]*std::sin(angle),0);
+        if(rotated)point=(rotation.conjugate()*point.cwiseQuotient(shape.dimensions)).cwiseProduct(shape.dimensions);
+        return point;
+    }
+    const double R=shape.dimensions[0],r=shape.dimensions[1],ra=a.head<2>().norm(),rb=b.head<2>().norm();
+    if(ra>=R+r && rb>=R+r) {
+        const auto arc=solver.ellipseArc(a[0],a[1],b[0],b[1],R+r,R+r);
+        const double angle=arc.entry+arc.sweep/2.;return Eigen::Vector3d((R+r)*std::cos(angle),(R+r)*std::sin(angle),0);
+    }
+    Eigen::Vector2d axis(1,0);if(rb>1e-12)axis=b.head<2>()/rb;else if(ra>1e-12)axis=a.head<2>()/ra;
+    if(axis[0]<-1e-12 || (std::abs(axis[0])<=1e-12 && axis[1]<0))axis=-axis;
+    const double au=(a.head<2>().dot(axis)>=0?1.:-1.)*ra,bu=(b.head<2>().dot(axis)>=0?1.:-1.)*rb;
+    const bool positive=LocalSolver::intersectsEllipse(au,a[2],bu,b[2],r,r,R,0);
+    const bool negative=LocalSolver::intersectsEllipse(au,a[2],bu,b[2],r,r,-R,0);
+    if(positive&&negative)throw std::runtime_error("No connected torus meridian NGV initializer: baseline crosses both tubes");
+    const double centre=positive?R:(negative?-R:(au+bu>=0?R:-R));
+    const auto arc=solver.ellipseArc(au,a[2],bu,b[2],r,r,centre,0);
+    const double angle=arc.entry+arc.sweep/2.;const double u=centre+r*std::cos(angle);
+    return Eigen::Vector3d(axis[0]*u,axis[1]*u,r*std::sin(angle));
+}
+void collisionCheck(const std::vector<Object>& objects,const Eigen::Vector3d& a,
+                    const Eigen::Vector3d& b,std::size_t owner)
+{
+    for(std::size_t j=0;j<objects.size();++j)if(j!=owner && surfaceLevelOnSegment(objects[j],a,b)<-1e-8)
+        throw std::runtime_error("Wrapping trajectory intersects another object or an object outside its assigned via-point region; this contact configuration is unsupported");
+}
+void checkRegionCollisions(const std::vector<Object>& objects,const Region& region,const std::vector<Contact>& contacts)
+{
+    Eigen::Vector3d previous=region.start;
+    for(std::size_t index:region.objects) {
+        const Contact& c=contacts[index];if(!c.active)continue;
+        collisionCheck(objects,previous,c.entry,objects.size());
+        for(std::size_t i=1;i<c.samples.size();++i)collisionCheck(objects,c.samples[i-1],c.samples[i],index);
+        previous=c.exit;
+    }
+    collisionCheck(objects,previous,region.end,objects.size());
+}
+// Shape differential geometry in the same normalized coordinates as shooting.
+void normalizedGeometry(const Object& object,const Eigen::Vector3d& global,
+                        double& level,Eigen::Vector3d& gradient,Eigen::Matrix3d& hessian)
+{
+    const Shape& shape=object.shape;
+    if(shape.kind==Shape::Cylinder) {
+        const double scale=shape.dimensions.maxCoeff(),r=shape.dimensions[0]/scale;
+        const Eigen::Vector3d p=toLocal(object,global)/scale;
+        level=p.head<2>().squaredNorm()/(r*r)-1.;
+        gradient=Eigen::Vector3d(2*p[0]/(r*r),2*p[1]/(r*r),0);
+        hessian=Eigen::Matrix3d::Zero();hessian(0,0)=hessian(1,1)=2/(r*r);
+    } else {
+        const Surface surface(shape.kind==Shape::Ellipsoid?Surface::Ellipsoid:Surface::Torus,shape.dimensions);
+        surface.geometry(toLocal(object,global)/surface.scale,level,gradient,hessian);
+    }
+}
+void validateNgvCandidate(const std::vector<Object>& objects,const Region& region,
+                          const NgvRegion& ngv,std::vector<Contact>& contacts)
+{
+    if(ngv.contacts.size()!=region.objects.size())throw std::runtime_error("Invalid NGV contact count");
+    for(std::size_t i=0;i<region.objects.size();++i)contacts[region.objects[i]]=ngv.contacts[i].curve;
+    for(std::size_t i=0;i<region.objects.size();++i) {
+        const std::size_t index=region.objects[i];const Object& object=objects[index];Contact& c=contacts[index];
+        Eigen::Vector3d a=region.start,b=region.end;
+        for(std::size_t j=i;j>0;--j)if(contacts[region.objects[j-1]].active){a=contacts[region.objects[j-1]].exit;break;}
+        for(std::size_t j=i+1;j<region.objects.size();++j)if(contacts[region.objects[j]].active){b=contacts[region.objects[j]].entry;break;}
+        if(c.active!=chordRequiresContact(object,a,b))
+            throw std::runtime_error("NGV contact activation disagrees with the native clear-chord policy");
+        if(!c.active) {c.entry=a;c.exit=b;c.length=0;c.samples.clear();continue;}
+        if(!c.entry.allFinite()||!c.exit.allFinite()||!std::isfinite(c.length)||c.length<=0||c.samples.size()<2)
+            throw std::runtime_error("Invalid NGV active contact geometry");
+        const NgvContact& frame=ngv.contacts[i];const double entryDistance=(c.entry-a).norm(),exitDistance=(b-c.exit).norm();
+        if(entryDistance<=1e-14||exitDistance<=1e-14 ||
+            (frame.entryTangent-(c.entry-a)/entryDistance).norm()>2e-9 ||
+            (frame.exitTangent-(b-c.exit)/exitDistance).norm()>2e-9)
+            throw std::runtime_error("NGV wrapping failed the full tangent-direction check");
+        const Eigen::Matrix3d rotation=object.pose.block<3,3>(0,0);
+        for(int endpoint=0;endpoint<2;++endpoint) {
+            const Eigen::Vector3d point=endpoint==0?c.entry:c.exit;
+            const Eigen::Vector3d normal=endpoint==0?frame.entryNormal:frame.exitNormal;
+            const Eigen::Vector3d tangent=endpoint==0?frame.entryTangent:frame.exitTangent;
+            double level;Eigen::Vector3d g;Eigen::Matrix3d h;normalizedGeometry(object,point,level,g,h);
+            if(!normal.allFinite()||!tangent.allFinite()||!g.allFinite()||g.norm()==0 ||
+                std::abs(tangent.norm()-1)>2e-9 || (normal-rotation*g.normalized()).norm()>2e-9 ||
+                std::abs(tangent.dot(normal))>2e-9)
+                throw std::runtime_error("NGV contact Frenet frame disagrees with surface geometry");
+        }
+        const double scale=object.shape.dimensions.maxCoeff();
+        if((c.samples.front()-c.entry).norm()>2e-9*scale || (c.samples.back()-c.exit).norm()>2e-9*scale)
+            throw std::runtime_error("NGV curve samples do not include their contacts");
+        for(std::size_t j=0;j<c.samples.size();++j) {
+            const Eigen::Vector3d& p=c.samples[j];
+            if(!p.allFinite())throw std::runtime_error("NGV curve contains non-finite samples");
+            double level;Eigen::Vector3d g;Eigen::Matrix3d h;normalizedGeometry(object,p,level,g,h);
+            if(!std::isfinite(level)||std::abs(level)>2e-9||!g.allFinite()||g.norm()==0||!h.allFinite())
+                throw std::runtime_error("NGV curve failed the normalized surface-defect check");
+            if(object.shape.kind==Shape::Cylinder && std::abs(toLocal(object,p)[2])>object.shape.dimensions[1]/2.+1e-10*scale)
+                throw std::runtime_error("Finite-cylinder NGV contact lies beyond the lateral surface; rim/cap contact is unsupported");
+            Eigen::Vector3d tangent;
+            if(j==0)tangent=frame.entryTangent;
+            else if(j+1==c.samples.size())tangent=frame.exitTangent;
+            else tangent=c.samples[j+1]-c.samples[j-1];
+            if(!tangent.allFinite()||tangent.norm()==0)throw std::runtime_error("Degenerate NGV contact tangent");
+            tangent=rotation.transpose()*tangent.normalized();
+            if(tangent.dot(h*tangent)/g.norm()<-2e-9)
+                throw std::runtime_error("NGV contact requires a negative normal reaction");
+        }
+    }
+    double length=0;Eigen::Vector3d previous=region.start;
+    for(std::size_t index:region.objects)if(contacts[index].active) {
+        length+=(contacts[index].entry-previous).norm()+contacts[index].length;previous=contacts[index].exit;
+    }
+    length+=(region.end-previous).norm();
+    if(!std::isfinite(ngv.length)||std::abs(length-ngv.length)>2e-9*std::max(1.,(region.end-region.start).norm()))
+        throw std::runtime_error("NGV reported arc lengths disagree with its complete path length");
+    checkRegionCollisions(objects,region,contacts);
+}
+
+
+void stampSeed(Seed& seed,const Shape& shape)
+{seed.kind=shape.kind;seed.side=shape.side;seed.dimensions=shape.dimensions;}
+bool seedMatches(const Seed& seed,const Shape& shape)
+{return seed.side==shape.side && seed.kind==shape.kind && (seed.dimensions.array()==shape.dimensions.array()).all();}
+Seed torusSeedFromContact(const Object& object,const Contact& contact,
+                          const Eigen::Vector3d& a,const Eigen::Vector3d& b)
+{
+    const Surface surface(Surface::Torus,object.shape.dimensions);
+    const Eigen::Vector2d angles=surface.angles(toLocal(object,contact.entry)/surface.scale);
+    Seed seed;seed.parameters={angles[0],angles[1],std::log(contact.length/surface.scale)};
+    seed.start=toLocal(object,a);seed.end=toLocal(object,b);stampSeed(seed,object.shape);
+    return seed;
+}
+bool validTorusWarmSeed(const Object& object,const Region& region,const Seed& seed)
+{
+    if(!seedMatches(seed,object.shape)||seed.parameters.size()!=3||!seed.start.allFinite()||!seed.end.allFinite())return false;
+    for(double value:seed.parameters)if(!std::isfinite(value))return false;
+    const double arc=std::exp(seed.parameters[2]);if(!std::isfinite(arc)||arc<=0)return false;
+    const Surface surface(Surface::Torus,object.shape.dimensions);
+    return (toLocal(object,region.start)-seed.start).norm()<.5*surface.scale &&
+        (toLocal(object,region.end)-seed.end).norm()<.5*surface.scale;
+}
+Contact solveNativeWarmTorus(const Object& object,const Region& region,Seed& seed)
+{
+    const Surface surface(Surface::Torus,object.shape.dimensions);
+    const Eigen::Vector3d a=toLocal(object,region.start),b=toLocal(object,region.end);
+    // finalSolve retains the native 512/1024 refinement, surface/unit-speed,
+    // full tangent direction, positive reaction and own-free-chord checks.
+    const Result solved=shoot(surface,a/surface.scale,b/surface.scale,
+        Eigen::Map<const Eigen::Vector3d>(seed.parameters.data()),true);
+    if(!std::isfinite(solved.length)||solved.length<=0||solved.points.size()<2)
+        throw std::runtime_error("Invalid native warm torus contact curve");
+    Contact contact;contact.active=true;contact.length=solved.length*surface.scale;
+    for(const Eigen::Vector3d& point:solved.points) {
+        if(!point.allFinite())throw std::runtime_error("Native warm torus returned a non-finite contact sample");
+        contact.samples.push_back(toGlobal(object,point*surface.scale));
+    }
+    contact.entry=contact.samples.front();contact.exit=contact.samples.back();
+    seed.parameters.assign(solved.parameters.data(),solved.parameters.data()+3);
+    seed.start=a;seed.end=b;stampSeed(seed,object.shape);
+    return contact;
+}
+
 }
 PathResult solvePath(const std::vector<Object>& objects,const std::vector<Region>& regions,std::vector<Seed>* seeds)
 {
     std::vector<unsigned int> occurrences(objects.size(),0);
-    for(const Object& object:objects) {const Object checked(object.shape,object.pose);(void)checked;}
+    for(const Object& object:objects) {
+        const Shape checkedShape(object.shape.kind,object.shape.dimensions,object.shape.side);
+        const Object checked(checkedShape,object.pose);(void)checked;
+    }
     for(const Region& region:regions) {
         if(!region.start.allFinite() || !region.end.allFinite()) throw std::invalid_argument("Wrapping anchors must be finite");
         for(std::size_t index:region.objects) {
@@ -560,15 +872,74 @@ PathResult solvePath(const std::vector<Object>& objects,const std::vector<Region
     for(unsigned int count:occurrences) if(count!=1)
         throw std::invalid_argument("Every wrapping object must occur once in the path regions");
     std::vector<Seed> localSeeds=seeds?*seeds:std::vector<Seed>();localSeeds.resize(objects.size());
+    for(std::size_t i=0;i<objects.size();++i)
+        if(localSeeds[i].side!=0 && !seedMatches(localSeeds[i],objects[i].shape))localSeeds[i]=Seed();
     PathResult result;result.length=0;result.contacts.resize(objects.size());
     result.anchorGradients.assign(2*regions.size(),Eigen::Vector3d::Zero());
     result.poseGradients.assign(objects.size(),Eigen::Matrix4d::Zero());
-    for(const Region& region:regions) solveRegion(objects,region,result.contacts,localSeeds);
-    const auto checkLine=[&](const Eigen::Vector3d& a,const Eigen::Vector3d& b,std::size_t owner) {
-        for(std::size_t j=0;j<objects.size();++j) if(j!=owner)
-            if(surfaceLevelOnSegment(objects[j],a,b)<-1e-8)
-                throw std::runtime_error("Wrapping trajectory intersects another object or a different via-point region; this contact configuration is unsupported");
-    };
+    result.regionSolvers.reserve(regions.size());
+    for(const Region& region:regions) {
+        validateRegionEndpoints(objects,region);
+        bool clear=true;for(std::size_t index:region.objects)clear=clear&&!chordRequiresContact(objects[index],region.start,region.end);
+        const bool analytical=clear||analyticalRegion(objects,region);
+        RegionSolver route=analytical?RegionSolver::Analytical:RegionSolver::NativeGeodesic;
+        bool accepted=false;
+        const bool singleSpatialTorus=!analytical && region.objects.size()==1 &&
+            objects[region.objects.front()].shape.kind==Shape::Torus;
+        if(singleSpatialTorus && seeds) {
+            const std::size_t index=region.objects.front();
+            if(validTorusWarmSeed(objects[index],region,localSeeds[index])) {
+                try {
+                    Seed next=localSeeds[index];std::vector<Contact> contacts=result.contacts;
+                    contacts[index]=solveNativeWarmTorus(objects[index],region,next);
+                    checkRegionCollisions(objects,region,contacts);
+                    result.contacts.swap(contacts);localSeeds[index]=next;
+                    accepted=true;route=RegionSolver::NativeWarm;
+                } catch(const std::runtime_error&) {
+                    // A rejected warm result is never published or reused.
+                }
+            }
+            if(!accepted)localSeeds[index]=Seed();
+        }
+        if(!analytical && !accepted && ngvAvailable()) {
+            try {
+                std::vector<Eigen::Vector3d> hints;hints.reserve(region.objects.size());
+                for(std::size_t index:region.objects)hints.push_back(geometricHint(objects[index],region));
+                const NgvRegion candidate=solveNgvRegion(objects,region,hints);
+                std::vector<Contact> contacts=result.contacts;
+                validateNgvCandidate(objects,region,candidate,contacts);
+                std::vector<Seed> nextSeeds=localSeeds;
+                // Convert only accepted torus geometry to a value-owned native
+                // seed. Simbody state itself remains local and is never retained.
+                for(std::size_t i=0;i<region.objects.size();++i) {
+                    const std::size_t index=region.objects[i];nextSeeds[index]=Seed();
+                    if(seeds && objects[index].shape.kind==Shape::Torus && contacts[index].active) {
+                        Eigen::Vector3d a=region.start,b=region.end;
+                        for(std::size_t j=i;j>0;--j)if(contacts[region.objects[j-1]].active){a=contacts[region.objects[j-1]].exit;break;}
+                        for(std::size_t j=i+1;j<region.objects.size();++j)if(contacts[region.objects[j]].active){b=contacts[region.objects[j]].entry;break;}
+                        nextSeeds[index]=torusSeedFromContact(objects[index],contacts[index],a,b);
+                    }
+                }
+                result.contacts.swap(contacts);localSeeds.swap(nextSeeds);
+                accepted=true;route=RegionSolver::Scholz2015;
+            } catch(const std::exception&) {
+                // Only the optional candidate is discarded. Input validation
+                // has already run; every true native solve failure propagates.
+                route=RegionSolver::NativeFallback;
+            }
+        }
+        if(!accepted) {
+            if(clear) {
+                for(std::size_t index:region.objects) {
+                    result.contacts[index]=Contact();result.contacts[index].entry=region.start;result.contacts[index].exit=region.end;
+                    localSeeds[index]=Seed();
+                }
+            } else solveRegion(objects,region,result.contacts,localSeeds);
+            checkRegionCollisions(objects,region,result.contacts);
+            for(std::size_t index:region.objects)stampSeed(localSeeds[index],objects[index].shape);
+        }
+        result.regionSolvers.push_back(route);
+    }
     const std::size_t noObject=objects.size();
     // Stationarity cancels sliding contact velocities. Accumulate only free-piece
     // material velocities, exactly as Geometry::computeJacobianLength does.
@@ -576,7 +947,6 @@ PathResult solvePath(const std::vector<Object>& objects,const std::vector<Region
         const Region& region=regions[k];Eigen::Vector3d previous=region.start;
         std::size_t previousObject=noObject;
         const auto freePiece=[&](const Eigen::Vector3d& end,std::size_t nextObject) {
-            checkLine(previous,end,noObject);
             const Eigen::Vector3d d=end-previous;const double length=d.norm();result.length+=length;
             if(length<=1e-14) return;
             const Eigen::Vector3d direction=d/length;
@@ -594,7 +964,6 @@ PathResult solvePath(const std::vector<Object>& objects,const std::vector<Region
         for(std::size_t index:region.objects) {
             const Contact& c=result.contacts[index];if(!c.active) continue;
             freePiece(c.entry,index);result.length+=c.length;
-            for(std::size_t i=1;i<c.samples.size();++i) checkLine(c.samples[i-1],c.samples[i],index);
             previous=c.exit;previousObject=index;
         }
         freePiece(region.end,noObject);
