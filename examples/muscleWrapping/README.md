@@ -49,10 +49,109 @@ associated solids still constrain the complete trajectory. Infeasible orders
 and intersections raise an error. The example `.bioMod` files give complete
 blocks for each shape.
 
+## Hybrid solver
+
+The default build retains the native solver and its existing dependencies. To
+enable the optional spatial NGV backend, install Simbody 3.9 or newer and use
+CMake 3.21 or newer:
+
+```sh
+cmake -S . -B build/eigen -DBIORBD_WITH_SIMBODY_WRAPPING=ON \
+    -DSimbody_DIR=/path/to/simbody/lib/cmake/simbody
+cmake --build build/eigen
+```
+
+The same option works with `-DMATH_LIBRARY_BACKEND=Casadi`. Simbody is a private
+dependency of the internal-forces library; no Simbody types appear in the
+installed biorbd headers. Its current imported targets require a compiler with
+C++20 support. An explicitly enabled backend fails configuration if Simbody is
+unavailable; with the option OFF, Simbody is not searched or linked.
+
+Analytical cylinder helices, principal-plane ellipsoid sections, torus meridians
+and equators, and free straight paths retain the native route. Spatial ellipsoid
+and cold torus paths and coupled mixed spatial regions use Simbody's
+`Scholz2015` algorithm when enabled. Cylinder-only chains retain the native
+helical solver, including non-parallel axes; integrated benchmarks show that
+Simbody setup costs outweigh its solve-time gain on these cases. Contact hints
+are computed from the shape, its prescribed side and the current endpoints; reference coordinates are never supplied to the solver.
+
+Every NGV proposal must pass surface and tangent checks, finite-cylinder bounds,
+nonnegative contact reaction, exact free-chord collision checks and sampled
+cross-object arc checks. A converged proposal is not sufficient on its own.
+Proposals that fail these checks or the solver convergence check fall back to the
+native solver, whose existing errors remain errors. `MinimumLength` is not used.
+
+The native activation rule also applies to NGV: an object cannot retain contact
+when the free chord between its neighbours is clear. In particular, a free
+straight segment through the torus hole bypasses NGV. This avoids the retained
+contact branch seen in the standalone Simbody motion benchmark. A switch of
+contact branch is still piecewise smooth rather than globally differentiable.
+
+NGV systems and states are local to each solve; there is no mutable shared
+Simbody cache or growing solver registry. Native seeds remain value-owned and
+are committed only after the complete trajectory is accepted. NGV evaluations
+currently use cold initialization, including in CasADi callbacks. For a single
+spatial torus with a caller-owned seed, a successful cold solve also provides
+native shooting angles and normalized arc length. Subsequent nearby calls first
+try the faster native warm geodesic, with the same refinement and physical checks.
+A failed warm solve returns to the cold hybrid dispatch; the seed never substitutes
+for validation. CasADi callbacks remain deterministic cold evaluations.
+
+Hybrid dispatch applies to `Model` / `Geometry`; standalone calls to
+`WrappingSurface::wrapPoints()` retain the native surface solver.
+`Geometry` uses the same numerical path kernel for Eigen and CasADi. Eigen
+publishes dense arc samples and active contacts only after successful global
+validation. The shared stationary envelope derivatives retain the existing
+length, velocity and force-to-torque conventions described below.
+
+For an end-to-end timing comparison, run the following against each freshly
+built Python binding, first without and then with the optional backend:
+
+```sh
+python examples/python3/muscleWrappingHybridBenchmark.py --backend eigen \
+    --label native --output native-eigen.json
+python examples/python3/muscleWrappingHybridBenchmark.py --backend eigen \
+    --label hybrid --output hybrid-eigen.json
+python examples/python3/muscleWrappingHybridBenchmark.py --backend casadi \
+    --label hybrid --output hybrid-casadi.json
+```
+
+The script measures repeated model updates or CasADi `Function` evaluations
+returning length, its Jacobian and velocity, and verifies the reference lengths
+and `velocity = J * Qdot`. Model/graph creation is outside the timer. These times
+include kinematics and Python output extraction, so they are not the standalone
+geometric-kernel timings. Compare on the same machine without concurrent builds.
+
+The measured integration comparison against commit `935de0ab` is recorded with
+raw samples in [hybridBenchmarkResults.json](hybridBenchmarkResults.json). Each
+row is the median of 75 evaluations at Q=0, in three serial blocks after two
+untimed priming calls. Times are in milliseconds:
+
+| Spatial fixture | Eigen native | Eigen hybrid | CasADi native | CasADi hybrid |
+| --- | ---: | ---: | ---: | ---: |
+| Ellipsoid | 1.4520 | 0.7342 | 7.5896 | 1.2243 |
+| Torus | 1.5683 | 0.6774 | 11.1875 | 6.8361 |
+| Three tilted cylinders | 6.4264 | 0.4361 | 0.3073 | 0.3023 |
+| Ellipsoid + cylinder + torus | 46.8254 | 3.8633 | 68.5817 | 6.9057 |
+
+These are Release builds on the same macOS arm64 host, collected on different
+days without a reserved CPU. Eigen reuses native seeds; CasADi uses cold
+callbacks. This comparison includes the shared-kernel integration and C++11 vs
+C++20 build standards, so it does not isolate the external solver. Analytical
+CasADi fixtures remain around 0.02–0.06 ms, with small changes in either direction;
+small ratios should not be interpreted as reliable speedups. No motion-cycle
+performance or global branch-optimality claim follows from these timings.
+
+Run the Python regression suites from `test/binding/Python3` so legacy relative
+model paths resolve. With the matching fresh package on `PYTHONPATH`, use
+`python -m pytest -q` for Eigen and `python -m unittest test_wrapping_casadi -v`
+for CasADi. The exact CasADi module avoids recursively importing unrelated Eigen
+packages when both backend builds use different Python ABIs.
+
 ## Path and derivatives
 
-Each region is solved by iterating the tangent contacts, using the previous
-object's exit and the next object's entry. Inactive objects are reconsidered on
+The native solver handles each region by iterating the tangent contacts, using
+the previous object's exit and the next object's entry. Inactive objects are reconsidered on
 each sweep. Convergence requires stable activity and contact/arc-length changes
 below `1e-10 * max(1, region_chord_length)` in model units, within 200 sweeps.
 For several objects, admissible object-local symmetry-plane contacts provide
@@ -145,8 +244,10 @@ these examples should be kept as `.bioMod` sources.
 Native and Python regressions compare independent lengths, contact geometry,
 rigid frame invariance, copy isolation, multi-object/via paths, length derivatives
 against centred finite differences, and failure cases. The latest reported runs
-passed 171 Eigen C++ tests, 78 Eigen Python tests, 147 CasADi C++ tests, and 12
-CasADi Python tests, including callback/concurrency coverage. CasADi Hessian
+passed 177 Eigen C++ tests, 153 CasADi C++ tests, 177 C++ tests with Simbody
+disabled, 78 Eigen Python tests (12 backend-specific skips), and 12 CasADi Python
+tests, including callback/concurrency coverage. Four IPOPT examples also passed
+with gradient finite-difference and limited-memory Hessians. CasADi Hessian
 finite differences use a fixed Q step of `1e-6` in each coordinate’s model unit.
 Hessian checks use an absolute tolerance of `2e-4`; symmetry checks use
 `5e-5`. The six original reference lengths
