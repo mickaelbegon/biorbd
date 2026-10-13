@@ -43,7 +43,10 @@ internal_forces::muscles::StateDynamicsDeGroote::timeDerivativeActivation(
   utils::Scalar f;     // activation dynamics
   // std::tanh;
 
-  diff = *m_excitation - *m_activation;
+  const utils::Scalar excitation =
+      alreadyNormalized ? *m_excitation
+                        : normalizeExcitation(characteristics.stateMax());
+  diff = excitation - *m_activation;
   f = 0.5 * tanh(0.1 * diff);
 
   utils::Scalar denom_activation =
