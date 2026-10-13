@@ -3,6 +3,7 @@
 
 #include "InternalForces/Muscles/FatigueParameters.h"
 #include "InternalForces/Muscles/State.h"
+#include "Utils/Error.h"
 
 using namespace BIORBD_NAMESPACE;
 
@@ -12,9 +13,8 @@ internal_forces::muscles::Characteristics::Characteristics()
       m_PCSA(std::make_shared<utils::Scalar>(0)),
       m_tendonSlackLength(std::make_shared<utils::Scalar>(0)),
       m_pennationAngle(std::make_shared<utils::Scalar>(0)),
-      m_stateMax(
-          std::make_shared<internal_forces::muscles::State>(
-              internal_forces::muscles::State(1, 1))),
+      m_stateMax(std::make_shared<internal_forces::muscles::State>(
+          internal_forces::muscles::State(1, 1))),
       m_minActivation(std::make_shared<utils::Scalar>(0.01)),
       m_torqueActivation(std::make_shared<utils::Scalar>(0.01)),
       m_torqueDeactivation(std::make_shared<utils::Scalar>(0.04)),
@@ -22,7 +22,9 @@ internal_forces::muscles::Characteristics::Characteristics()
           std::make_shared<internal_forces::muscles::FatigueParameters>(
               internal_forces::muscles::FatigueParameters())),
       m_useDamping(std::make_shared<bool>(false)),
-      m_maxShorteningSpeed(std::make_shared<utils::Scalar>(10.0)) {}
+      m_maxShorteningSpeed(std::make_shared<utils::Scalar>(10.0)),
+      m_maxShorteningSpeedUnits(
+          std::make_shared<MAX_SHORTENING_SPEED_UNITS>(LEGACY_SPEED_UNITS)) {}
 
 internal_forces::muscles::Characteristics::Characteristics(
     const internal_forces::muscles::Characteristics& other)
@@ -37,7 +39,8 @@ internal_forces::muscles::Characteristics::Characteristics(
       m_torqueDeactivation(other.m_torqueDeactivation),
       m_fatigueParameters(other.m_fatigueParameters),
       m_useDamping(other.m_useDamping),
-      m_maxShorteningSpeed(other.m_maxShorteningSpeed) {}
+      m_maxShorteningSpeed(other.m_maxShorteningSpeed),
+      m_maxShorteningSpeedUnits(other.m_maxShorteningSpeedUnits) {}
 
 internal_forces::muscles::Characteristics::Characteristics(
     const utils::Scalar& optLength,
@@ -65,8 +68,9 @@ internal_forces::muscles::Characteristics::Characteristics(
           std::make_shared<internal_forces::muscles::FatigueParameters>(
               fatigueParameters)),
       m_useDamping(std::make_shared<bool>(useDamping)),
-      m_maxShorteningSpeed(
-          std::make_shared<utils::Scalar>(maxShorteningSpeed)) {}
+      m_maxShorteningSpeed(std::make_shared<utils::Scalar>(maxShorteningSpeed)),
+      m_maxShorteningSpeedUnits(
+          std::make_shared<MAX_SHORTENING_SPEED_UNITS>(LEGACY_SPEED_UNITS)) {}
 
 internal_forces::muscles::Characteristics::~Characteristics() {}
 
@@ -91,6 +95,21 @@ void internal_forces::muscles::Characteristics::DeepCopy(
   *m_fatigueParameters = other.m_fatigueParameters->DeepCopy();
   *m_useDamping = *other.m_useDamping;
   *m_maxShorteningSpeed = *other.m_maxShorteningSpeed;
+  *m_maxShorteningSpeedUnits = *other.m_maxShorteningSpeedUnits;
+}
+
+void internal_forces::muscles::Characteristics::setMaxShorteningSpeedUnits(
+    MAX_SHORTENING_SPEED_UNITS units) {
+  utils::Error::check(
+      units == LEGACY_SPEED_UNITS || units == OPTIMAL_LENGTHS_PER_SECOND ||
+          units == LENGTH_UNITS_PER_SECOND,
+      "Invalid maximum shortening speed units");
+  *m_maxShorteningSpeedUnits = units;
+}
+
+internal_forces::muscles::MAX_SHORTENING_SPEED_UNITS
+internal_forces::muscles::Characteristics::maxShorteningSpeedUnits() const {
+  return *m_maxShorteningSpeedUnits;
 }
 
 // Get et Set

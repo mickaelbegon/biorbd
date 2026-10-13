@@ -169,7 +169,13 @@ class BIORBD_API HillType : public Muscle {
   ///
   const utils::Scalar& damping();
 
+  /// Maximum fiber shortening speed in model length units/s. Explicit units
+  /// share this scale across all force-velocity families and damping.
+  utils::Scalar maxShorteningSpeedInLengthUnits() const;
+
  protected:
+  virtual bool legacyNormalizedVelocity() const;
+
   ///
   /// \brief Set type to Hill
   ///

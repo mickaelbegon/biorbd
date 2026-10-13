@@ -122,6 +122,8 @@ class BIORBD_API HillThelenType : public HillType {
   virtual void computeFlCE(const State& emg);
 
  protected:
+  virtual bool legacyNormalizedVelocity() const;
+
   ///
   /// \brief Set type to Hill_Thelen
   ///

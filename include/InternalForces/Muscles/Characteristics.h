@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <memory>
 
+#include "InternalForces/Muscles/MusclesEnums.h"
 #include "Utils/Scalar.h"
 
 namespace BIORBD_NAMESPACE {
@@ -157,6 +158,10 @@ class BIORBD_API Characteristics {
   ///
   const utils::Scalar& maxShorteningSpeed() const;
 
+  /// Explicit units for maximum shortening speed; defaults to legacy.
+  void setMaxShorteningSpeedUnits(MAX_SHORTENING_SPEED_UNITS units);
+  MAX_SHORTENING_SPEED_UNITS maxShorteningSpeedUnits() const;
+
   ///
   /// \brief Set the time activation constant
   /// \param val The value of the time activation constant
@@ -230,6 +235,8 @@ class BIORBD_API Characteristics {
 
   std::shared_ptr<utils::Scalar>
       m_maxShorteningSpeed;  ///< Maximal velocity of shortening
+
+  std::shared_ptr<MAX_SHORTENING_SPEED_UNITS> m_maxShorteningSpeedUnits;
 
   // Activation parameters
   std::shared_ptr<utils::Scalar> m_minActivation;  ///< Minimal activation
