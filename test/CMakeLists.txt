@@ -59,6 +59,9 @@ set(TEST_SRC_FILES
 )
 if(MODULE_MUSCLES)
     list(APPEND TEST_SRC_FILES "${CMAKE_SOURCE_DIR}/test/test_muscles.cpp")
+    file(GLOB MUSCLE_AUDIT_TESTS CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/test/test_muscle_audit_*.cpp")
+    list(APPEND TEST_SRC_FILES ${MUSCLE_AUDIT_TESTS})
 endif()
 if(MODULE_LIGAMENTS)
     list(APPEND TEST_SRC_FILES "${CMAKE_SOURCE_DIR}/test/test_ligaments.cpp")

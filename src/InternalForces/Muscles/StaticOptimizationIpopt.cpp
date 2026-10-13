@@ -32,7 +32,7 @@ internal_forces::muscles::StaticOptimizationIpopt::StaticOptimizationIpopt(
       m_nbMus(std::make_shared<unsigned int>(model.nbMuscleTotal())),
       m_nbDof(std::make_shared<unsigned int>(model.nbDof())),
       m_nbTorque(std::make_shared<unsigned int>(model.nbGeneralizedTorque())),
-      m_nbTorqueResidual(std::make_shared<unsigned int>(*m_nbQ)),
+      m_nbTorqueResidual(std::make_shared<unsigned int>(*m_nbTorque)),
       m_eps(std::make_shared<double>(eps)),
       m_activations(std::make_shared<utils::Vector>(activationInit)),
       m_Q(std::make_shared<rigidbody::GeneralizedCoordinates>(Q)),
@@ -42,14 +42,14 @@ internal_forces::muscles::StaticOptimizationIpopt::StaticOptimizationIpopt(
       m_torqueResidual(
           std::make_shared<utils::Vector>(utils::Vector::Zero(*m_nbTorque))),
       m_torquePonderation(std::make_shared<double>(1000)),
-      m_states(
-          std::make_shared<
-              std::vector<std::shared_ptr<internal_forces::muscles::State>>>(
-              *m_nbMus)),
+      m_states(std::make_shared<
+               std::vector<std::shared_ptr<internal_forces::muscles::State>>>(
+          *m_nbMus)),
       m_pNormFactor(std::make_shared<unsigned int>(pNormFactor)),
       m_verbose(std::make_shared<int>(verbose)),
       m_finalSolution(std::make_shared<utils::Vector>(utils::Vector(*m_nbMus))),
-      m_finalResidual(std::make_shared<utils::Vector>(utils::Vector(*m_nbQ))) {
+      m_finalResidual(
+          std::make_shared<utils::Vector>(utils::Vector(*m_nbTorque))) {
   if (*m_eps < 1e-12) {
     utils::Error::raise(
         "epsilon for partial derivates approximation is too small ! \nLimit "

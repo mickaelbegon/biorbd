@@ -3,6 +3,8 @@
 #include "InternalForces/Muscles/StaticOptimization.h"
 
 #include <IpIpoptApplication.hpp>
+#include <cmath>
+#include <string>
 
 #include "BiorbdModel.h"
 #include "InternalForces/Muscles/StateDynamics.h"
@@ -11,6 +13,7 @@
 #include "RigidBody/GeneralizedTorque.h"
 #include "RigidBody/GeneralizedVelocity.h"
 #include "Utils/Error.h"
+#include "Utils/String.h"
 #include "Utils/Vector.h"
 
 using namespace BIORBD_NAMESPACE;
@@ -97,10 +100,8 @@ internal_forces::muscles::StaticOptimization::StaticOptimization(
         "of dimension nbMuscles");
   }
 
-  if (initialActivationGuess.size() == 0) {
-    for (unsigned int i = 0; i < m_model.nbMuscles(); i++) {
-      (*m_initialActivationGuess)[i] = initialActivationGuess[i].activation();
-    }
+  for (unsigned int i = 0; i < m_model.nbMuscles(); ++i) {
+    (*m_initialActivationGuess)[i] = initialActivationGuess[i].activation();
   }
 }
 
@@ -181,15 +182,21 @@ internal_forces::muscles::StaticOptimization::StaticOptimization(
         "of dimension nbMuscles");
   }
 
-  if (initialActivationGuess.size() == 0) {
-    for (unsigned int i = 0; i < m_model.nbMuscles(); i++) {
-      (*m_initialActivationGuess)[i] = initialActivationGuess[i].activation();
-    }
+  for (unsigned int i = 0; i < m_model.nbMuscles(); ++i) {
+    (*m_initialActivationGuess)[i] = initialActivationGuess[i].activation();
   }
 }
 
 void internal_forces::muscles::StaticOptimization::run(
     bool useLinearizedState) {
+  m_alreadyRun = false;
+  m_staticOptimProblem.clear();
+  m_solverStatuses.clear();
+  m_finalTorqueErrors.clear();
+  utils::Error::check(
+      !m_allQ.empty() && m_allQ.size() == m_allQdot.size() &&
+          m_allQ.size() == m_allTorqueTarget.size(),
+      "Static optimization frame counts must match and be nonempty");
   // Setup the Ipopt problem
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
   app->Options()->SetNumericValue("tol", 1e-7);
@@ -198,7 +205,7 @@ void internal_forces::muscles::StaticOptimization::run(
   app->Options()->SetStringValue("hessian_approximation", "limited-memory");
   app->Options()->SetStringValue("derivative_test", "first-order");
   app->Options()->SetIntegerValue("max_iter", 10000);
-  app->Options()->SetIntegerValue("print_level", 5);
+  app->Options()->SetIntegerValue("print_level", m_verbose > 0 ? 5 : 0);
 
   Ipopt::ApplicationReturnStatus status;
   status = app->Initialize();
@@ -230,6 +237,33 @@ void internal_forces::muscles::StaticOptimization::run(
               m_verbose));
     // Optimize!
     status = app->OptimizeTNLP(m_staticOptimProblem[i]);
+    m_solverStatuses.push_back(static_cast<int>(status));
+    utils::Error::check(
+        status == Ipopt::Solve_Succeeded ||
+            status == Ipopt::Solved_To_Acceptable_Level,
+        "Static optimization failed at frame " + std::to_string(i) +
+            " (IPOPT status " + std::to_string(static_cast<int>(status)) + ")");
+
+    auto* problem =
+        static_cast<internal_forces::muscles::StaticOptimizationIpopt*>(
+            Ipopt::GetRawPtr(m_staticOptimProblem[i]));
+    const utils::Vector activation = problem->finalSolution();
+    std::vector<std::shared_ptr<internal_forces::muscles::State>> states;
+    for (unsigned int j = 0; j < m_model.nbMuscles(); ++j) {
+      states.push_back(
+          std::make_shared<internal_forces::muscles::State>(0, activation[j]));
+    }
+    utils::Vector error =
+        m_model.muscularJointTorque(states, m_allQ[i], m_allQdot[i]) +
+        problem->finalResidual() - m_allTorqueTarget[i];
+    for (unsigned int j = 0; j < error.size(); ++j) {
+      const double tolerance = 1e-6 * (1 + std::fabs(m_allTorqueTarget[i][j]));
+      utils::Error::check(
+          std::isfinite(error[j]) && std::fabs(error[j]) <= tolerance,
+          "Static optimization physical torque balance failed at frame " +
+              std::to_string(i));
+    }
+    m_finalTorqueErrors.push_back(error);
 
     // Take the solution of the previous optimization as the solution for the
     // next optimization
@@ -275,4 +309,25 @@ utils::Vector internal_forces::muscles::StaticOptimization::finalSolution(
               ->finalSolution();
   }
   return res;
+}
+
+std::vector<int> internal_forces::muscles::StaticOptimization::solverStatuses()
+    const {
+  return m_solverStatuses;
+}
+
+utils::Vector internal_forces::muscles::StaticOptimization::finalResidual(
+    unsigned int index) const {
+  utils::Error::check(
+      m_alreadyRun, "Static optimization has no validated final solution");
+  return static_cast<internal_forces::muscles::StaticOptimizationIpopt*>(
+             Ipopt::GetRawPtr(m_staticOptimProblem.at(index)))
+      ->finalResidual();
+}
+
+utils::Vector internal_forces::muscles::StaticOptimization::finalTorqueError(
+    unsigned int index) const {
+  utils::Error::check(
+      m_alreadyRun, "Static optimization has no validated final solution");
+  return m_finalTorqueErrors.at(index);
 }
