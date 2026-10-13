@@ -1,0 +1,28 @@
+version 4
+segment Ground
+endsegment
+segment Moving
+    parent Ground
+    translations x
+    mass 1
+    inertia
+        1 0 0
+        0 1 0
+        0 0 1
+    com 0 0 0
+endsegment
+musclegroup group
+    OriginParent Ground
+    InsertionParent Moving
+endmusclegroup
+muscle test
+    Type thelen
+    musclegroup group
+    OriginPosition 0 0 0
+    InsertionPosition 0 0 0
+    optimalLength 0.1
+    maximalForce 1000
+    tendonSlackLength 0.1
+    pennationAngle 0
+    maxShorteningSpeed 10
+endmuscle
