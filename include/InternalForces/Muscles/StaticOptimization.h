@@ -170,7 +170,8 @@ class BIORBD_API StaticOptimization {
   ///
   /// \brief Run the static optimization
   /// \param useLinearizedState If use the algorithm should be run with the
-  /// linearized approach (faster but less precise)
+  /// affine approach. Generic Hill curves automatically use the full
+  /// nonlinear law because their force-length curve depends on activation.
   ///
   void run(bool useLinearizedState = true);
 

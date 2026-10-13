@@ -46,7 +46,7 @@ class BIORBD_API StaticOptimizationIpoptLinearized
       bool useResidual = true,
       unsigned int pNormFactor = 2,
       int verbose = 0,
-      double eps = 1e-10);
+      double eps = 1e-6);
 
   ///
   /// \brief Destroy class properly
@@ -92,6 +92,7 @@ class BIORBD_API StaticOptimizationIpoptLinearized
       Ipopt::Number* values);
 
  protected:
+  std::shared_ptr<utils::Vector> m_torqueOffset;
   std::shared_ptr<utils::Matrix> m_jacobian;  ///< The constraints jacobian
   void prepareJacobian();  ///< Setup the constant constraints jacobian
 };

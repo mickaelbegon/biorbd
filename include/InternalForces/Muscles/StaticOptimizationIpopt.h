@@ -50,7 +50,7 @@ class BIORBD_API StaticOptimizationIpopt : public Ipopt::TNLP {
       bool useResidual = true,
       unsigned int pNormFactor = 2,
       int verbose = 0,
-      double eps = 1e-10);
+      double eps = 1e-6);
 
   ///
   /// \brief Destroy class properly

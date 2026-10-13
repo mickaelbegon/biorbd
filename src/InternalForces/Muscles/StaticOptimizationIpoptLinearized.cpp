@@ -2,9 +2,12 @@
 #include "InternalForces/Muscles/StaticOptimizationIpoptLinearized.h"
 
 #include "BiorbdModel.h"
+#include "InternalForces/Muscles/Muscle.h"
 #include "InternalForces/Muscles/State.h"
 #include "RigidBody/GeneralizedTorque.h"
+#include "Utils/Error.h"
 #include "Utils/Matrix.h"
+#include "Utils/Vector.h"
 
 using namespace BIORBD_NAMESPACE;
 using namespace internal_forces;
@@ -30,12 +33,18 @@ internal_forces::muscles::StaticOptimizationIpoptLinearized::
           pNormFactor,
           verbose,
           eps),
-      m_jacobian(std::make_shared<utils::Matrix>(*m_nbDof, *m_nbMus)) {
+      m_torqueOffset(std::make_shared<utils::Vector>(*m_nbTorque)),
+      m_jacobian(std::make_shared<utils::Matrix>(*m_nbTorque, *m_nbMus)) {
   prepareJacobian();
 }
 
 void internal_forces::muscles::StaticOptimizationIpoptLinearized::
     prepareJacobian() {
+  for (unsigned int i = 0; i < *m_nbMus; ++i) {
+    utils::Error::check(
+        m_model.muscle(i).type() != MUSCLE_TYPE::HILL,
+        "Generic Hill muscles require nonlinear static optimization");
+  }
   m_model.updateMuscles(*m_Q, *m_Qdot, true);
   std::vector<std::shared_ptr<internal_forces::muscles::State>> state_zero;
   for (unsigned int i = 0; i < *m_nbMus; ++i) {
@@ -45,6 +54,7 @@ void internal_forces::muscles::StaticOptimizationIpoptLinearized::
   }
   const rigidbody::GeneralizedTorque &GeneralizedTorque_zero(
       m_model.muscularJointTorque(state_zero));
+  *m_torqueOffset = GeneralizedTorque_zero;
   for (unsigned int i = 0; i < *m_nbMus; ++i) {
     std::vector<std::shared_ptr<internal_forces::muscles::State>> state;
     for (unsigned int j = 0; j < *m_nbMus; ++j) {
@@ -88,7 +98,8 @@ bool internal_forces::muscles::StaticOptimizationIpoptLinearized::eval_g(
     for (unsigned int j = 0; j < *m_nbMus; j++) {
       res[i] += (*m_jacobian)(i, j) * x[j];
     }
-    g[i] = res[i] + (*m_torqueResidual)[i];
+    g[i] = (*m_torqueOffset)[i] + res[i] + (*m_torqueResidual)[i] -
+           (*m_torqueTarget)[i];
   }
   if (*m_verbose >= 2) {
     std::cout << "GeneralizedTorque_musc_approximated = " << res.transpose()
