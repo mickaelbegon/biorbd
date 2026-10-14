@@ -5,6 +5,8 @@ channels:
 dependencies:
 - python =3.11
 - casadi =3.7.2
+# Retain legacy Eigen CMake variables and C++11 support for both backends.
+- eigen =3.4.0
 - rbdl =3.3.1
 - scipy
 - ezc3d
