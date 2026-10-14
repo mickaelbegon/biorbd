@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -490,3 +492,11 @@ def test_wrapper_model(brbd):
 if __name__ == "__main__":
     for brbd in brbd_to_test:
         test_wrapper_model(brbd)
+
+
+@pytest.mark.parametrize("brbd", brbd_to_test)
+def test_wrapper_model_accepts_pathlib(brbd):
+    model_str = brbd.Biorbd("../../models/pyomecaman.bioMod")
+    model_path = brbd.Biorbd(Path("../../models/pyomecaman.bioMod"))
+    assert model_path.nb_q == model_str.nb_q
+    assert model_path.name == model_str.name
