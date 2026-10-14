@@ -336,6 +336,9 @@ class InverseKinematics:
             If method = 'trf', the 'trf' method will be used for all the frames.
             If method = 'only_lm', the 'lm' method will be used for all the frames.
 
+            The bounds of the model (joint ranges) are therefore respected for all the frames with 'trf', only
+            for the first frame with 'lm' (the following frames can slightly exceed them) and never with 'only_lm'.
+
             In least_square:
                 -‘trf’ : Trust Region Reflective algorithm, particularly suitable for large sparse problems
                         with bounds.
