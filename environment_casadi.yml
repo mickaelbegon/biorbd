@@ -2,12 +2,18 @@
 name: biorbd_casadi
 channels:
 - conda-forge
-- default
 dependencies:
-- python >=3.10
-- casadi
-- rbdl
+- python =3.11
+- casadi =3.7.2
+- rbdl =3.3.1
 - scipy
 - ezc3d
 - tinyxml
 - ipopt
+# Keep the legacy GoogleTest CMake policies supported.
+- cmake >=3.14,<4
+- swig >=4,<4.4
+- numpy
+- pytest
+- git
+- pkgconfig
