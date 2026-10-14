@@ -2,6 +2,7 @@
 #include "InternalForces/Muscles/HillThelenTypeFatigable.h"
 
 #include "InternalForces/Muscles/FatigueState.h"
+#include "InternalForces/Muscles/State.h"
 #include "Utils/String.h"
 
 using namespace BIORBD_NAMESPACE;
@@ -103,6 +104,18 @@ void internal_forces::muscles::HillThelenTypeFatigable::computeFlCE(
   internal_forces::muscles::HillThelenType::computeFlCE(emg);
   // Do something with m_FlCE and m_characteristics.fatigueParameters
   *m_FlCE *= m_fatigueState->activeFibers();
+}
+
+utils::Scalar
+internal_forces::muscles::HillThelenTypeFatigable::getForceFromActivation(
+    const internal_forces::muscles::State &emg) {
+  if (fatigueState().getType() == STATE_FATIGUE_TYPE::DYNAMIC_XIA) {
+    // computeFlCE already includes MA; do not multiply recruitment by its
+    // target command a a second time. Passive force and damping are unchanged.
+    const State recruited(emg.excitation(), 1);
+    return HillThelenType::getForceFromActivation(recruited);
+  }
+  return HillThelenType::getForceFromActivation(emg);
 }
 
 void internal_forces::muscles::HillThelenTypeFatigable::setType() {

@@ -124,6 +124,10 @@ class BIORBD_API HillThelenTypeFatigable : public HillThelenType,
   virtual void computeFlCE(const State& emg);
 
  protected:
+  /// Xia activeFibers is already the recruited fraction. Simple fatigue
+  /// retains the activation-times-capacity convention.
+  virtual utils::Scalar getForceFromActivation(const State& emg);
+
   ///
   /// \brief Set type to Hill_Thelen_Fatigable
   ///
