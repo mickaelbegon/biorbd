@@ -51,6 +51,14 @@ inline const char* MUSCLE_TYPE_toStr(MUSCLE_TYPE type) {
 ///
 /// \brief The available emg state type
 ///
+// Units of the maximum shortening speed parameter. Legacy preserves each
+// historical muscle family and its historical damping normalization.
+enum MAX_SHORTENING_SPEED_UNITS {
+  LEGACY_SPEED_UNITS,
+  OPTIMAL_LENGTHS_PER_SECOND,
+  LENGTH_UNITS_PER_SECOND
+};
+
 enum STATE_TYPE { SIMPLE_STATE, DYNAMIC, BUCHANAN, DE_GROOTE, NO_STATE_TYPE };
 
 ///

@@ -1027,6 +1027,7 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
         double PCSA(0);
         double shapeFactor(0);
         double maxShorteningSpeed(10);
+        auto speedUnits = internal_forces::muscles::LEGACY_SPEED_UNITS;
         internal_forces::muscles::FatigueParameters fatigueParameters;
 
         // Read file
@@ -1106,6 +1107,20 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(PCSA, variable);
           } else if (!property_tag.tolower().compare("maxshorteningspeed")) {
             file.read(maxShorteningSpeed, variable);
+          } else if (!property_tag.tolower().compare(
+                         "maxshorteningspeedunits")) {
+            utils::String units;
+            file.read(units);
+            if (!units.tolower().compare("legacy")) {
+              speedUnits = internal_forces::muscles::LEGACY_SPEED_UNITS;
+            } else if (!units.tolower().compare("optimal_lengths_per_second")) {
+              speedUnits = internal_forces::muscles::OPTIMAL_LENGTHS_PER_SECOND;
+            } else if (!units.tolower().compare("length_units_per_second")) {
+              speedUnits = internal_forces::muscles::LENGTH_UNITS_PER_SECOND;
+            } else {
+              utils::Error::raise(
+                  "Unknown maximum shortening speed units " + units);
+            }
           } else if (!property_tag.tolower().compare("fatigueparameters")) {
             while (file.read(subproperty_tag) &&
                    subproperty_tag.tolower().compare("endfatigueparameters")) {
@@ -1164,6 +1179,7 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             fatigueParameters,
             useDamping,
             maxShorteningSpeed);
+        characteristics.setMaxShorteningSpeedUnits(speedUnits);
         model->muscleGroup(static_cast<size_t>(idxGroup))
             .addMuscle(
                 name,

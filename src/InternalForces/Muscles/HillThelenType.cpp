@@ -107,8 +107,7 @@ void internal_forces::muscles::HillThelenType::computeFlCE(
 
 void internal_forces::muscles::HillThelenType::computeFvCE() {
   utils::Scalar v = m_position->velocity();
-  utils::Scalar norm_v = v / (characteristics().optimalLength() *
-                              this->characteristics().maxShorteningSpeed());
+  utils::Scalar norm_v = v / maxShorteningSpeedInLengthUnits();
   utils::Scalar kvce = 0.06;
   utils::Scalar flen = 1.6;
 
@@ -136,6 +135,11 @@ void internal_forces::muscles::HillThelenType::computeFvCE() {
   }
 #endif
 }
+bool internal_forces::muscles::HillThelenType::legacyNormalizedVelocity()
+    const {
+  return true;
+}
+
 void internal_forces::muscles::HillThelenType::setType() {
   *m_type = internal_forces::muscles::MUSCLE_TYPE::HILL_THELEN;
 }

@@ -156,6 +156,16 @@ class Muscle:
         self.internal.characteristics().setMaxShorteningSpeed(to_biorbd_array_input(value))
 
     @property
+    def maximal_contraction_velocity_units(self) -> int:
+        """Units of maximal_contraction_velocity; defaults to the legacy convention."""
+        return self.internal.characteristics().maxShorteningSpeedUnits()
+
+    @maximal_contraction_velocity_units.setter
+    def maximal_contraction_velocity_units(self, value: int):
+        """Select LEGACY_SPEED_UNITS, OPTIMAL_LENGTHS_PER_SECOND or LENGTH_UNITS_PER_SECOND."""
+        self.internal.characteristics().setMaxShorteningSpeedUnits(value)
+
+    @property
     def length(self) -> BiorbdScalar:
         """
         Get the current pre-updated muscle length of the muscle (update_geometry must therefore be called prior to this method).

@@ -259,21 +259,36 @@ void internal_forces::muscles::HillType::setType() {
   *m_type = internal_forces::muscles::MUSCLE_TYPE::HILL;
 }
 
+bool internal_forces::muscles::HillType::legacyNormalizedVelocity() const {
+  return false;
+}
+
+utils::Scalar
+internal_forces::muscles::HillType::maxShorteningSpeedInLengthUnits() const {
+  const auto units = characteristics().maxShorteningSpeedUnits();
+  const bool legacyNormalized = legacyNormalizedVelocity();
+  if (units == OPTIMAL_LENGTHS_PER_SECOND ||
+      (units == LEGACY_SPEED_UNITS && legacyNormalized)) {
+    return characteristics().optimalLength() *
+           characteristics().maxShorteningSpeed();
+  }
+  return characteristics().maxShorteningSpeed();
+}
+
 void internal_forces::muscles::HillType::computeDamping() {
+  const utils::Scalar maximumVelocity =
+      characteristics().maxShorteningSpeedUnits() == LEGACY_SPEED_UNITS
+          ? characteristics().optimalLength() *
+                characteristics().maxShorteningSpeed()
+          : maxShorteningSpeedInLengthUnits();
 #ifdef BIORBD_USE_CASADI_MATH
   *m_damping = IF_ELSE_NAMESPACE::if_else_zero(
       IF_ELSE_NAMESPACE::gt(position().velocity(), 0),
-      ((position().velocity() /
-        (characteristics().optimalLength() *
-         this->characteristics().maxShorteningSpeed())) *
-       *m_cste_damping));
+      ((position().velocity() / maximumVelocity) * *m_cste_damping));
 
 #else
   if (position().velocity() > 0) {
-    *m_damping = (position().velocity() /
-                  (characteristics().optimalLength() *
-                   this->characteristics().maxShorteningSpeed())) *
-                 *m_cste_damping;
+    *m_damping = (position().velocity() / maximumVelocity) * *m_cste_damping;
   } else {
     *m_damping = 0;
   }
@@ -297,23 +312,20 @@ void internal_forces::muscles::HillType::computeFvCE() {
 #ifdef BIORBD_USE_CASADI_MATH
   *m_FvCE = IF_ELSE_NAMESPACE::if_else(
       IF_ELSE_NAMESPACE::le(v, 0),
-      (1.0 - std::fabs(v) / this->characteristics().maxShorteningSpeed()) /
-          (1.0 + std::fabs(v) / this->characteristics().maxShorteningSpeed() /
-                     *m_cste_FvCE_1),
-      (1.0 - 1.33 * v / this->characteristics().maxShorteningSpeed() /
-                 *m_cste_FvCE_2) /
-          (1 -
-           v / this->characteristics().maxShorteningSpeed() / *m_cste_FvCE_2));
+      (1.0 - std::fabs(v) / maxShorteningSpeedInLengthUnits()) /
+          (1.0 +
+           std::fabs(v) / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_1),
+      (1.0 - 1.33 * v / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_2) /
+          (1 - v / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_2));
 #else
   if (v <= 0)
-    *m_FvCE = (1 - fabs(v) / this->characteristics().maxShorteningSpeed()) /
-              (1 + fabs(v) / this->characteristics().maxShorteningSpeed() /
-                       *m_cste_FvCE_1);
+    *m_FvCE =
+        (1 - fabs(v) / maxShorteningSpeedInLengthUnits()) /
+        (1 + fabs(v) / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_1);
   else
     *m_FvCE =
-        (1 - 1.33 * v / this->characteristics().maxShorteningSpeed() /
-                 *m_cste_FvCE_2) /
-        (1 - v / this->characteristics().maxShorteningSpeed() / *m_cste_FvCE_2);
+        (1 - 1.33 * v / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_2) /
+        (1 - v / maxShorteningSpeedInLengthUnits() / *m_cste_FvCE_2);
 #endif
 }
 
