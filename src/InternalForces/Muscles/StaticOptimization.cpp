@@ -5,6 +5,7 @@
 #include <IpIpoptApplication.hpp>
 
 #include "BiorbdModel.h"
+#include "InternalForces/Muscles/Muscle.h"
 #include "InternalForces/Muscles/StateDynamics.h"
 #include "InternalForces/Muscles/StaticOptimizationIpoptLinearized.h"
 #include "RigidBody/GeneralizedCoordinates.h"
@@ -190,6 +191,16 @@ internal_forces::muscles::StaticOptimization::StaticOptimization(
 
 void internal_forces::muscles::StaticOptimization::run(
     bool useLinearizedState) {
+  // The legacy Hill curve depends on activation, so a single affine map
+  // cannot enforce its physical torque. Use the full force law in that case.
+  if (useLinearizedState) {
+    for (unsigned int i = 0; i < m_model.nbMuscles(); ++i) {
+      if (m_model.muscle(i).type() == internal_forces::muscles::HILL) {
+        useLinearizedState = false;
+        break;
+      }
+    }
+  }
   // Setup the Ipopt problem
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
   app->Options()->SetNumericValue("tol", 1e-7);
