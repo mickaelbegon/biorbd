@@ -1,0 +1,19 @@
+{
+  "id": "10", "slug": "forward-dynamics", "scene": "AnimForwardDynamics", "level": 2,
+  "section": {"en": "Dynamics", "fr": "Dynamique"},
+  "title": {"en": "Forward dynamics and integration", "fr": "Dynamique directe et intégration"},
+  "description": {
+    "en": "model.forward_dynamics returns the accelerations qddot from q, qdot and tau. biorbd has no integrator in its core, so a hand-written Euler and a hand-written RK4 are compared on a passive double pendulum through the drift of its total energy.",
+    "fr": "model.forward_dynamics renvoie les accélérations qddot à partir de q, qdot et tau. biorbd n'a pas d'intégrateur dans son cœur : un Euler et un RK4 écrits à la main sont comparés sur un double pendule passif grâce à la dérive de son énergie totale."
+  },
+  "notes": {
+    "en": "The motion is simulated (released at rest, tau = 0, no damping). The energy is read with model.internal.TotalEnergy(q, qdot), which is not wrapped in Python. For real simulations use an ODE solver or a tool such as bioptim.",
+    "fr": "Le mouvement est simulé (lâché au repos, tau = 0, sans amortissement). L'énergie est lue avec model.internal.TotalEnergy(q, qdot), qui n'est pas enveloppée en Python. Pour de vraies simulations, utilisez un solveur d'EDO ou un outil comme bioptim."
+  },
+  "links": [
+    {"label": {"en": "Forward dynamics example", "fr": "Exemple de dynamique directe"}, "path": "examples/python3/forward_dynamics.py", "lines": [20, 32]},
+    {"label": {"en": "Biorbd.forward_dynamics", "fr": "Biorbd.forward_dynamics"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [297, 353]},
+    {"label": {"en": "Energy functions (C++ header)", "fr": "Fonctions d'énergie (en-tête C++)"}, "path": "include/RigidBody/Joints.h", "lines": [1077, 1124]},
+    {"label": {"en": "Pendulum model", "fr": "Modèle de pendule"}, "path": "test/models/pendulum.bioMod", "lines": [1, 25]}
+  ]
+}

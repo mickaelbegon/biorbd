@@ -1,0 +1,19 @@
+{
+  "id": "09", "slug": "inverse-dynamics", "scene": "AnimInverseDynamics", "level": 2,
+  "section": {"en": "Dynamics", "fr": "Dynamique"},
+  "title": {"en": "Inverse dynamics", "fr": "Dynamique inverse"},
+  "description": {
+    "en": "Inverse dynamics gives the joint torques that produce a given motion (q, qdot, qddot). The video computes them with model.inverse_dynamics on the arm model and checks that they equal M(q) qddot + N(q, qdot), using the mass matrix and the nonlinear effects of biorbd.",
+    "fr": "La dynamique inverse donne les couples articulaires qui produisent un mouvement donné (q, qdot, qddot). La vidéo les calcule avec model.inverse_dynamics sur le modèle de bras et vérifie qu'ils valent M(q) qddot + N(q, qdot), avec la matrice de masse et les effets non linéaires de biorbd."
+  },
+  "notes": {
+    "en": "The motion is synthetic (sinusoids on the two joints, analytic derivatives); the torques, the mass matrix and the nonlinear effects are biorbd outputs. The two computations agree to about 1e-15 N.m, i.e. machine precision.",
+    "fr": "Le mouvement est synthétique (sinusoïdes sur les deux articulations, dérivées analytiques) ; les couples, la matrice de masse et les effets non linéaires sont calculés par biorbd. Les deux calculs concordent à environ 1e-15 N.m, soit la précision machine."
+  },
+  "links": [
+    {"label": {"en": "Example: inverse dynamics", "fr": "Exemple : dynamique inverse"}, "path": "examples/python3/inverse_dynamics.py", "lines": [17, 30]},
+    {"label": {"en": "Python wrapper: mass matrix", "fr": "Interface Python : matrice de masse"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [73, 99]},
+    {"label": {"en": "Python wrapper: nonlinear effects", "fr": "Interface Python : effets non linéaires"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [101, 124]},
+    {"label": {"en": "Python wrapper: inverse dynamics", "fr": "Interface Python : dynamique inverse"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [355, 383]}
+  ]
+}

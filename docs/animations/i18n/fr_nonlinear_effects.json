@@ -1,0 +1,15 @@
+{
+  "Nonlinear effects": "Effets non linéaires",
+  "Gravity and velocity terms in one vector.": "Gravité et termes de vitesse dans un seul vecteur.",
+  "Posture and velocities chosen by hand.": "Posture et vitesses choisies à la main.",
+  "Synthetic data": "Données synthétiques",
+  "biorbd code": "Code biorbd",
+  "gravity": "gravité",
+  "ratio": "rapport",
+  "Vertical force {0} N = {1} kg × {2} m/s².": "Force verticale {0} N = {1} kg × {2} m/s².",
+  "It is positive: it pushes the pelvis up, against gravity.": "Elle est positive : elle pousse le bassin vers le haut, contre la gravité.",
+  "biorbd has no separate Coriolis function.": "biorbd n'a pas de fonction Coriolis séparée.",
+  "Velocity part: N(q, qdot) − N(q, {0}).": "Partie dépendant de la vitesse : N(q, qdot) − N(q, {0}).",
+  "The ratio is {0} on all {1} degrees of freedom, within {2}.": "Le rapport vaut {0} sur les {1} degrés de liberté, à {2} près.",
+  "Doubling the velocity multiplies the velocity part by four.": "Doubler la vitesse multiplie par quatre la partie dépendant de la vitesse."
+}

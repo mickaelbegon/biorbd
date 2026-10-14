@@ -1,0 +1,12 @@
+{
+  "Inertial measurement unit": "Centrale inertielle (IMU)",
+  "An IMU is a frame fixed in a segment.": "Une IMU est un repère fixé dans un segment.",
+  "The IMU is fixed in the segment.": "L'IMU est fixée dans le segment.",
+  "Offset in the segment:": "Position dans le segment :",
+  "World rotation of the IMU:": "Rotation de l'IMU (monde) :",
+  "Faded frames show the previous posture.": "Les repères estompés montrent la posture précédente.",
+  "World = segment × local rotation:": "Monde = rotation du segment × rotation locale :",
+  "The largest difference is {0}.": "La plus grande différence est de {0}.",
+  "The IMU orientation follows its segment, and biorbd computes it from q.": "L'orientation de l'IMU suit son segment, et biorbd la calcule à partir de q.",
+  "biorbd code": "Code biorbd"
+}

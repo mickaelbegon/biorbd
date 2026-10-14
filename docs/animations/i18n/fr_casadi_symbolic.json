@@ -1,0 +1,13 @@
+{
+  "A separate build of biorbd gives symbolic functions.": "Une version séparée donne des fonctions symboliques.",
+  "Both builds evaluated at q = [{0}, {1}] rad.": "Les deux versions évaluées en q = [{0}, {1}] rad.",
+  "Both builds give the same mass matrix for this pendulum.": "Les deux versions donnent la même matrice de masse pour ce pendule.",
+  "CasADi build": "Version CasADi",
+  "Default build": "Version par défaut",
+  "Largest difference: {0}": "Écart maximal : {0}",
+  "One entry of the matrix, in terms of q.": "Un terme de la matrice, en fonction de q.",
+  "Symbolic functions": "Fonctions symboliques",
+  "The CasADi build is installed separately.": "La version CasADi s'installe séparément.",
+  "The mass matrix becomes a function of q.": "La matrice de masse devient une fonction de q.",
+  "biorbd code": "Code biorbd"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "16",
+  "slug": "kalman-filter",
+  "scene": "AnimKalmanFilter",
+  "level": 3,
+  "section": {"en": "Inverse kinematics", "fr": "Cinématique inverse"},
+  "title": {"en": "Kalman filter", "fr": "Filtre de Kalman"},
+  "description": {
+    "en": "The extended Kalman filter of biorbd reconstructs the joint angles frame by frame from noisy synthetic markers and is compared with solving each frame alone.",
+    "fr": "Le filtre de Kalman étendu de biorbd reconstruit les angles articulaires image par image à partir de marqueurs synthétiques bruités, et il est comparé à la résolution de chaque image seule."
+  },
+  "notes": {
+    "en": "Synthetic data with a known truth. The filter is used with the default noise and error factors, not tuned; the gain over a per-frame solution is modest here. Use the filter on real data when you also need velocities and accelerations.",
+    "fr": "Données synthétiques avec une vérité connue. Le filtre utilise les facteurs de bruit et d'erreur par défaut, sans réglage ; le gain par rapport à une résolution image par image est modeste ici. Utilisez le filtre sur des données réelles lorsque vous avez aussi besoin des vitesses et des accélérations."
+  },
+  "links": [
+    {"label": {"en": "ExtendedKalmanFilterMarkers", "fr": "ExtendedKalmanFilterMarkers"}, "path": "binding/python3/wrapper/extended_kalman_filter.py", "lines": [22, 74]},
+    {"label": {"en": "Kalman filter parameters", "fr": "Paramètres du filtre de Kalman"}, "path": "include/RigidBody/KalmanRecons.h", "lines": [25, 40]},
+    {"label": {"en": "C++ inverse kinematics example", "fr": "Exemple C++ de cinématique inverse"}, "path": "examples/inverseKinematicsKalmanExample.cpp", "lines": [21, 50]},
+    {"label": {"en": "Kalman filter test", "fr": "Test du filtre de Kalman"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_kalman_filter.py", "lines": [8, 32]}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "Centre of mass": "Centre de masse",
+  "A mass-weighted average that follows the posture": "Une moyenne pondérée par les masses qui suit la posture",
+  "Each dot is a segment's centre": "Chaque point est le centre de masse",
+  "of mass; larger means heavier.": "d'un segment ; plus gros, plus lourd.",
+  "Total mass:": "Masse totale :",
+  "{0} kg": "{0} kg",
+  "Average of the segments:": "Moyenne des segments :",
+  "Same code, new posture q:": "Même code, nouvelle posture q :",
+  "arm raised, both legs bent.": "bras levé, deux jambes fléchies.",
+  "Average minus biorbd, per posture:": "Moyenne moins biorbd, par posture :",
+  "The centre of mass is a mass-weighted average, so it moves with the posture.": "Le centre de masse est une moyenne pondérée par les masses : il suit donc la posture.",
+  "biorbd code": "Code biorbd",
+  "Hand-written code": "Code écrit à la main",
+  "Faded:": "Estompée :",
+  "previous posture.": "posture précédente."
+}

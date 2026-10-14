@@ -1,0 +1,23 @@
+{
+  "id": "17",
+  "slug": "static-optimization",
+  "scene": "AnimStaticOptimization",
+  "level": 3,
+  "section": {"en": "Muscles", "fr": "Muscles"},
+  "title": {"en": "Static optimization", "fr": "L'optimisation statique"},
+  "description": {
+    "en": "Six muscles act on two joints, so many activation sets give the same joint torque. Static optimization keeps the one with the smallest sum of squared activations, and the muscle joint torque reproduces the inverse-dynamics target.",
+    "fr": "Six muscles agissent sur deux articulations : de nombreux jeux d'activations donnent le même couple articulaire. L'optimisation statique garde celui dont la somme des activations au carré est la plus petite, et le couple musculaire reproduit la cible de dynamique inverse."
+  },
+  "notes": {
+    "en": "The motion is synthetic. The wrapper StaticOptimization.perform_frames calls run() with the default linearized option; the video uses the lower-level class with run(False), which keeps the exact muscle model (see the notes file of the video).",
+    "fr": "Le mouvement est synthétique. StaticOptimization.perform_frames du wrapper appelle run() avec l'option linéarisée par défaut ; la vidéo utilise la classe de plus bas niveau avec run(False), qui conserve le modèle musculaire exact (voir le fichier de notes de la vidéo)."
+  },
+  "links": [
+    {"label": {"en": "StaticOptimization wrapper", "fr": "Wrapper StaticOptimization"}, "path": "binding/python3/wrapper/static_optimization.py", "lines": [16, 35]},
+    {"label": {"en": "Static optimization example", "fr": "Exemple d'optimisation statique"}, "path": "examples/python3/static_optimization.py", "lines": [18, 52]},
+    {"label": {"en": "Muscle joint torque", "fr": "Couple articulaire musculaire"}, "path": "binding/python3/wrapper/muscle.py", "lines": [462, 490]},
+    {"label": {"en": "Static optimization test", "fr": "Test d'optimisation statique"}, "path": "test/binding/python3/tests_wrapper/test_wrapper_muscles.py", "lines": [133, 172]},
+    {"label": {"en": "StaticOptimization::run (C++)", "fr": "StaticOptimization::run (C++)"}, "path": "src/InternalForces/Muscles/StaticOptimization.cpp", "lines": [191, 230]}
+  ]
+}

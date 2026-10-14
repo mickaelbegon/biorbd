@@ -1,0 +1,10 @@
+{
+  "Rotations": "Rotations",
+  "Same angles, different order": "Mêmes angles, ordre différent",
+  "Three angles: {0}, {1}, {2} rad": "Trois angles : {0}, {1}, {2} rad",
+  "Largest difference between the matrices: {0}": "Plus grande différence entre les matrices : {0}",
+  "Quaternion of the xyz matrix (w, x, y, z):": "Quaternion de la matrice xyz (w, x, y, z) :",
+  "Matrix back to xyz angles: {0}, {1}, {2} rad": "Matrice reconvertie en angles xyz : {0}, {1}, {2} rad",
+  "The angle order changes the rotation; biorbd converts in both directions.": "L'ordre des angles change la rotation ; biorbd convertit dans les deux sens.",
+  "biorbd code": "Code biorbd"
+}

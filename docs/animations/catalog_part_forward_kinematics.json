@@ -1,0 +1,22 @@
+{
+  "id": "03",
+  "slug": "forward-kinematics",
+  "scene": "AnimForwardKinematics",
+  "level": 1,
+  "section": {"en": "Kinematics", "fr": "Cinématique"},
+  "title": {"en": "Forward kinematics", "fr": "Cinématique directe"},
+  "description": {
+    "en": "From generalized coordinates q, biorbd chains the segment frames of a leg and gives the world position of a marker.",
+    "fr": "À partir des coordonnées généralisées q, biorbd enchaîne les repères des segments d'une jambe et donne la position d'un marqueur dans le monde."
+  },
+  "notes": {
+    "en": "Model pyomecaman.bioMod, right leg in the sagittal plane, two poses. Numbers come from a real biorbd 1.12.3 run.",
+    "fr": "Modèle pyomecaman.bioMod, jambe droite dans le plan sagittal, deux postures. Les nombres viennent d'un vrai calcul biorbd 1.12.3."
+  },
+  "links": [
+    {"label": {"en": "Example: markers over a motion", "fr": "Exemple : marqueurs sur un mouvement"}, "path": "examples/python3/forward_kinematics.py", "lines": [25, 45]},
+    {"label": {"en": "Marker world position", "fr": "Position d'un marqueur dans le monde"}, "path": "binding/python3/wrapper/marker.py", "lines": [61, 73]},
+    {"label": {"en": "Segment frame in the world", "fr": "Repère d'un segment dans le monde"}, "path": "binding/python3/wrapper/segment_frame.py", "lines": [179, 191]},
+    {"label": {"en": "C++ global frame of a segment", "fr": "Repère global d'un segment en C++"}, "path": "include/RigidBody/Joints.h", "lines": [363, 377]}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "After iteration {0} it falls to {1} mm.": "Après l'itération {0}, elle tombe à {1} mm.",
+  "At iteration {0} the marker error is {1} mm.": "À l'itération {0}, l'erreur sur les marqueurs est de {1} mm.",
+  "Difference with the truth": "Différence avec la vérité",
+  "Estimated q": "q estimé",
+  "Find q from markers with Gauss-Newton": "Trouver q à partir des marqueurs avec Gauss-Newton",
+  "Gauss-Newton turns marker positions into joint angles by repeating one linear step.": "Gauss-Newton transforme des positions de marqueurs en angles articulaires en répétant un pas linéaire.",
+  "Hand-written code": "Code écrit à la main",
+  "Inverse kinematics by hand": "Cinématique inverse à la main",
+  "It stops decreasing after {0} iterations, at {1} mm.": "Elle cesse de diminuer après {0} itérations, à {1} mm.",
+  "Iterating on every frame recovers the true motion.": "Itérer sur chaque image retrouve le vrai mouvement.",
+  "Iteration": "Itération",
+  "Joint angles": "Angles articulaires",
+  "Marker error (mm)": "Erreur marqueurs (mm)",
+  "Measured markers": "Marqueurs mesurés",
+  "Model markers": "Marqueurs du modèle",
+  "Synthetic data": "Données synthétiques",
+  "The reconstruction error is {0} degrees (RMSE).": "L'erreur de reconstruction est de {0} degrés (RMSE).",
+  "Time (s)": "Temps (s)",
+  "True q": "q vrai",
+  "biorbd code": "Code biorbd"
+}

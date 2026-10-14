@@ -1,0 +1,22 @@
+{
+  "id": "02",
+  "slug": "model-loading",
+  "scene": "AnimModelLoading",
+  "level": 1,
+  "section": {"en": "Models", "fr": "Modèles"},
+  "title": {"en": "Loading a model", "fr": "Charger un modèle"},
+  "description": {
+    "en": "biorbd.Biorbd(path) reads a .bioMod file and returns a model object whose degrees of freedom, segments, markers and muscles can be listed.",
+    "fr": "biorbd.Biorbd(chemin) lit un fichier .bioMod et renvoie un objet modèle dont on peut lister les degrés de liberté, les segments, les marqueurs et les muscles."
+  },
+  "notes": {
+    "en": "Model examples/arm26.bioMod: 2 degrees of freedom, 11 segments, 5 markers, 6 muscles, read from a real biorbd 1.12.3 run. The path must be a str, not a Path.",
+    "fr": "Modèle examples/arm26.bioMod : 2 degrés de liberté, 11 segments, 5 marqueurs, 6 muscles, lus dans un vrai calcul biorbd 1.12.3. Le chemin doit être un str, pas un Path."
+  },
+  "links": [
+    {"label": {"en": "Example: muscles of the arm26 model", "fr": "Exemple : muscles du modèle arm26"}, "path": "examples/python3/forward_dynamics_from_muscles.py", "lines": [19, 29]},
+    {"label": {"en": "Model wrapper: constructor", "fr": "Wrapper du modèle : constructeur"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [12, 15]},
+    {"label": {"en": "Model wrapper: segments, markers, dof names, nb_q", "fr": "Wrapper du modèle : segments, marqueurs, noms des ddl, nb_q"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [149, 202]},
+    {"label": {"en": "The arm26 model file", "fr": "Le fichier du modèle arm26"}, "path": "examples/arm26.bioMod", "lines": [1, 40]}
+  ]
+}

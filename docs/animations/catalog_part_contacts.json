@@ -1,0 +1,19 @@
+{
+  "id": "12", "slug": "contacts", "scene": "AnimContacts", "level": 3,
+  "section": {"en": "Contacts and external forces", "fr": "Contacts et forces externes"},
+  "title": {"en": "Rigid contacts", "fr": "Contacts rigides"},
+  "description": {
+    "en": "A rigid contact declared in the bioMod file forbids the motion of its point along the chosen axes. The video runs the forward dynamics of a free cube with two contacts, first ignoring the contacts (free fall), then with them: the generalized accelerations vanish, the acceleration of the contact points is zero to numerical precision and biorbd returns the contact forces, whose vertical components add up to the weight.",
+    "fr": "Un contact rigide déclaré dans le fichier bioMod interdit le mouvement de son point selon les axes choisis. La vidéo calcule la dynamique directe d'un cube libre muni de deux contacts, d'abord en ignorant les contacts (chute libre), puis avec eux : les accélérations généralisées s'annulent, l'accélération des points de contact est nulle à la précision numérique et biorbd renvoie les forces de contact, dont les composantes verticales s'additionnent pour donner le poids."
+  },
+  "notes": {
+    "en": "Single static pose (q = 0, qdot = 0, tau = 0) of the test model cubeWithRigidContactsExternalForces.bioMod; no external force is added. The contact forces are not unique individually (two contacts constrain z), only their sum is.",
+    "fr": "Une seule pose statique (q = 0, qdot = 0, tau = 0) du modèle de test cubeWithRigidContactsExternalForces.bioMod ; aucune force externe n'est ajoutée. Les forces de contact ne sont pas uniques individuellement (deux contacts contraignent z), seule leur somme l'est."
+  },
+  "links": [
+    {"label": {"en": "Python wrapper: forward_dynamics with contacts", "fr": "Interface Python : dynamique directe avec contacts"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [297, 358]},
+    {"label": {"en": "C++ declaration of rigidContactsAcceleration", "fr": "Déclaration C++ de rigidContactsAcceleration"}, "path": "include/RigidBody/Contacts.h", "lines": [288, 320]},
+    {"label": {"en": "Model with two rigid contacts", "fr": "Modèle avec deux contacts rigides"}, "path": "test/models/cubeWithRigidContactsExternalForces.bioMod", "lines": [37, 47]},
+    {"label": {"en": "C++ test of the contact acceleration", "fr": "Test C++ de l'accélération d'un contact"}, "path": "test/test_rigidbody.cpp", "lines": [361, 378]}
+  ]
+}

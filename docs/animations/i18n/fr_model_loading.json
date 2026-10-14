@@ -1,0 +1,11 @@
+{
+  "Loading a model": "Charger un modèle",
+  "A path goes in, a model comes out": "Un chemin entre, un modèle sort",
+  "Loading the file builds a model.": "Charger le fichier construit un modèle.",
+  "Degrees of freedom: {0}": "Degrés de liberté : {0}",
+  "Segments: {0}": "Segments : {0}",
+  "Markers: {0}": "Marqueurs : {0}",
+  "Muscles: {0}": "Muscles : {0}",
+  "One call loads the file, then the model lists what it contains.": "Un seul appel charge le fichier, puis le modèle liste son contenu.",
+  "biorbd code": "Code biorbd"
+}

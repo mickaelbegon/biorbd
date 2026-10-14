@@ -1,0 +1,22 @@
+{
+  "Static optimization chooses the muscle activations.": "L'optimisation statique choisit les activations musculaires.",
+  "Hand-written code": "Code écrit à la main",
+  "Joint torque": "Couple articulaire",
+  "Muscle activation": "Activation musculaire",
+  "Muscle activations": "Activations musculaires",
+  "Muscle torque matches the target at every frame.": "Le couple musculaire suit la cible à chaque image.",
+  "Muscle torque minus target": "Couple musculaire moins cible",
+  "Muscle torque: {0} and {1} N·m": "Couple musculaire : {0} et {1} N·m",
+  "Muscles": "Muscles",
+  "Static optimization": "Optimisation statique",
+  "Static optimization keeps the set with the smallest sum of squares.": "L'optimisation statique garde le jeu à la plus petite somme des carrés.",
+  "Static optimization picks, among many, the activations that cost the least.": "L'optimisation statique choisit, parmi beaucoup, les activations les moins coûteuses.",
+  "Sum of squared activations: {0}": "Somme des activations au carré : {0}",
+  "Synthetic data": "Données synthétiques",
+  "Target": "Cible",
+  "Target joint torque: {0} and {1} N·m": "Couple articulaire cible : {0} et {1} N·m",
+  "The largest difference is {0} N·m.": "La plus grande différence est de {0} N·m.",
+  "Time (s)": "Temps (s)",
+  "biorbd code": "Code biorbd",
+  "{0} muscles act on {1} joints, so many sets give this torque.": "{0} muscles, {1} articulations : plusieurs jeux donnent ce couple."
+}

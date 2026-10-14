@@ -1,0 +1,19 @@
+{
+  "id": "18", "slug": "casadi-symbolic", "scene": "AnimCasadiSymbolic", "level": 3,
+  "section": {"en": "CasADi", "fr": "CasADi"},
+  "title": {"en": "Symbolic functions with the CasADi build", "fr": "Fonctions symboliques avec la version CasADi"},
+  "description": {
+    "en": "The CasADi build of biorbd (biorbd_casadi, installed separately from the default Eigen build) turns any model quantity into a symbolic CasADi function with to_casadi_func. The video builds the mass matrix of a two-link pendulum as a function of q, shows one symbolic entry, and compares its value at one pose with the mass matrix of the default build.",
+    "fr": "La version CasADi de biorbd (biorbd_casadi, installée séparément de la version Eigen par défaut) transforme toute grandeur du modèle en fonction symbolique CasADi avec to_casadi_func. La vidéo construit la matrice de masse d'un pendule à deux segments en fonction de q, montre un terme symbolique et compare sa valeur en une posture avec la matrice de masse de la version par défaut."
+  },
+  "notes": {
+    "en": "Both builds load the same small bioMod written for this video (masses 1 and 2 kg, known centres of mass and inertias). The two matrices agree to machine precision at the pose shown.",
+    "fr": "Les deux versions chargent le même petit fichier bioMod écrit pour cette vidéo (masses de 1 et 2 kg, centres de masse et inerties connus). Les deux matrices concordent à la précision machine dans la posture montrée."
+  },
+  "links": [
+    {"label": {"en": "to_casadi_func (CasADi backend only)", "fr": "to_casadi_func (version CasADi uniquement)"}, "path": "binding/python3/__init__.py", "lines": [15, 49]},
+    {"label": {"en": "Tests run with biorbd and biorbd_casadi", "fr": "Tests exécutés avec biorbd et biorbd_casadi"}, "path": "test/binding/python3/test_binder_python_rigidbody.py", "lines": [94, 120]},
+    {"label": {"en": "Python wrapper: mass matrix", "fr": "Interface Python : matrice de masse"}, "path": "binding/python3/wrapper/biorbd_model.py", "lines": [73, 99]},
+    {"label": {"en": "C++ declaration of massMatrix", "fr": "Déclaration C++ de massMatrix"}, "path": "include/RigidBody/Joints.h", "lines": [925, 934]}
+  ]
+}

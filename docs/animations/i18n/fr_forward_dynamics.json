@@ -1,0 +1,17 @@
+{
+  "A better integrator keeps the energy of a passive system nearly constant.": "Un meilleur intégrateur garde presque constante l'énergie d'un système passif.",
+  "At t = {0} forward dynamics returns qddot = {1}, {2}, {3}.": "À t = {0}, la dynamique directe renvoie qddot = {1}, {2}, {3}.",
+  "Energy drift (%)": "Dérive de l'énergie (%)",
+  "Euler": "Euler",
+  "Euler minus RK4 (%)": "Euler moins RK4 (%)",
+  "Forward dynamics": "Dynamique directe",
+  "Hand-written code": "Code écrit à la main",
+  "Integrate qddot to get a motion": "Intégrer qddot pour obtenir un mouvement",
+  "RK4": "RK4",
+  "Synthetic data": "Données synthétiques",
+  "Time (s)": "Temps (s)",
+  "With Euler the total energy drifts by {0} % in {1} s.": "Avec Euler, l'énergie totale dérive de {0} % en {1} s.",
+  "With RK4 and the same {0} s step, it stays below {1} %.": "Avec RK4 et le même pas de {0} s, elle reste sous {1} %.",
+  "biorbd code": "Code biorbd",
+  "biorbd does not integrate it: we write the integrator ourselves.": "biorbd ne l'intègre pas : nous écrivons l'intégrateur nous-mêmes."
+}

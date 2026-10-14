@@ -1,0 +1,11 @@
+{
+  "Anatomy of a .bioMod file": "Anatomie d'un fichier .bioMod",
+  "Every tag becomes part of the model": "Chaque balise devient un élément du modèle",
+  "The highlighted tags create these coordinates q:": "Les balises en évidence créent ces coordonnées q :",
+  "The highlighted tags come back from biorbd:": "Les balises en évidence sont relues par biorbd :",
+  "Mass: {0} kg": "Masse : {0} kg",
+  "Centre of mass: ({0}, {1}, {2}) m": "Centre de masse : ({0}, {1}, {2}) m",
+  "Marker position: ({0}, {1}, {2}) m": "Position du marqueur : ({0}, {1}, {2}) m",
+  "The text file describes the model, and biorbd gives its content back as numbers.": "Le fichier texte décrit le modèle, et biorbd en restitue le contenu sous forme de nombres.",
+  "biorbd code": "Code biorbd"
+}

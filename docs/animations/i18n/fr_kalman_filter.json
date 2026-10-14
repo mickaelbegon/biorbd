@@ -1,0 +1,15 @@
+{
+  "Difference with the truth": "Différence avec la vérité",
+  "Each frame alone": "Chaque image seule",
+  "Hand-written code": "Code écrit à la main",
+  "Joint angles": "Angles articulaires",
+  "Kalman filter": "Filtre de Kalman",
+  "Reconstruct q from noisy markers": "Reconstruire q à partir de marqueurs bruités",
+  "Solving each frame alone leaves {0} degrees of error (RMSE).": "Résoudre chaque image seule laisse {0} degrés d'erreur (RMSE).",
+  "Synthetic data": "Données synthétiques",
+  "The Kalman filter uses past frames and lowers the error to {0} degrees.": "Le filtre de Kalman utilise les images passées et réduit l'erreur à {0} degrés.",
+  "The filter smooths the marker noise by combining each frame with what came before.": "Le filtre lisse le bruit des marqueurs en combinant chaque image avec les précédentes.",
+  "Time (s)": "Temps (s)",
+  "True q": "q vrai",
+  "biorbd code": "Code biorbd"
+}
