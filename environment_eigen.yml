@@ -4,7 +4,8 @@ channels:
 - conda-forge
 dependencies:
 - python =3.11
-- eigen
+# Eigen 5 drops legacy CMake variables and requires C++14.
+- eigen =3.4.0
 - rbdl =3.3.1
 - scipy
 - ezc3d
