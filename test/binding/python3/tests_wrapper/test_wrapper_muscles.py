@@ -26,7 +26,7 @@ def test_muscles(brbd):
     # 1. Using the "low-level" way
     muscles.activations = activations
     muscles.update_geometry(q=q, qdot=qdot)
-    tau_ref = [-8.99327207, -11.62806138]
+    tau_ref = [-9.005806929627473, -11.636702253496441]
     if brbd.backend == brbd.CASADI:
         q_sym = MX.sym("q", model.nb_q, 1)
         qdot_sym = MX.sym("qdot", model.nb_qdot, 1)
@@ -39,15 +39,15 @@ def test_muscles(brbd):
 
     # 2. The "high-level" way, where the kinematics is updated internally (using a different q so we are not accidentally up to date)
     tau = evaluate(brbd, muscles.joint_torque, activations=activations, q=np.array(q) * 2, qdot=qdot)
-    np.testing.assert_almost_equal(tau, [-10.11532606, -10.13974674])
+    np.testing.assert_almost_equal(tau, [-10.12771661199604, -10.148907453956499])
 
     # Validate forces and length jacobian
     jacobian = np.array(evaluate(brbd, muscles.lengths_jacobian, q=np.array(q) * 2)).squeeze()
     forces = evaluate(brbd, muscles.forces, q=np.array(q) * 2, qdot=qdot)
-    np.testing.assert_almost_equal(-jacobian.T @ forces, [-10.11532606, -10.13974674])
+    np.testing.assert_almost_equal(-jacobian.T @ forces, [-10.12771661199604, -10.148907453956499])
 
     # Test the muscle forces for internal and explicit kinematics update
-    forces_ref = [403.47878369, 341.14054494, 214.28139395, 239.38801482, 201.51684182, 493.98451373]
+    forces_ref = [np.float64(403.8100467789133), np.float64(341.1405449393007), 214.281393945735, np.float64(239.44424303397545), np.float64(201.52075629828346), np.float64(493.98451373025125)]
     if brbd.backend == brbd.CASADI:
         q_sym = MX.sym("q", model.nb_q, 1)
         qdot_sym = MX.sym("qdot", model.nb_qdot, 1)
@@ -58,7 +58,7 @@ def test_muscles(brbd):
         np.testing.assert_almost_equal(muscles.forces(), forces_ref)
     np.testing.assert_almost_equal(evaluate(brbd, muscles.forces, q=np.array(q) * 2, qdot=qdot), forces_ref)
 
-    forces_ref = [245.63266637, 225.70738926, 132.04335764, 143.63280889, 117.39623324, 296.81063517]
+    forces_ref = [np.float64(245.8314242210582), np.float64(225.7073892631254), 132.04335763845853, np.float64(143.66654582038524), np.float64(117.3991725480951), np.float64(296.81063516920295)]
     if brbd.backend == brbd.CASADI:
         q_sym = MX.sym("q", model.nb_q, 1)
         qdot_sym = MX.sym("qdot", model.nb_qdot, 1)
@@ -119,14 +119,14 @@ def test_muscles(brbd):
         # The non-updated value is not suppose to reflect the changes properly
         assert muscle.force == muscles.forces()[0]
         np.testing.assert_almost_equal(
-            muscles.forces(), [441.00852545, 341.14054494, 214.28139395, 239.38801482, 201.51684182, 493.98451373]
+            muscles.forces(), [np.float64(441.1916630019785), np.float64(341.1405449393007), 214.281393945735, np.float64(239.44424303397545), np.float64(201.52075629828346), np.float64(493.98451373025125)]
         )
         muscles.update_geometry(q=q, qdot=qdot)
         assert muscle.force == muscles.forces()[0]
 
     np.testing.assert_almost_equal(
         evaluate(brbd, muscles.forces, q=q, qdot=qdot),
-        [37.43286925, 349.67505477, 212.67611275, 231.48743683, 194.03986176, 494.72543227],
+        [np.float64(37.43631431252156), np.float64(349.6750547709287), 212.67611275346965, np.float64(231.53930367271414), np.float64(194.0434984489122), np.float64(494.72543227476655)],
     )
 
 

@@ -23,6 +23,8 @@ using namespace BIORBD_NAMESPACE;
 
 internal_forces::muscles::MuscleGeometry::MuscleGeometry()
     : internal_forces::Geometry(),
+      m_fiberVelocity(std::make_shared<utils::Scalar>(0)),
+      m_fiberLengthJacobian(std::make_shared<utils::Matrix>()),
       m_muscleTendonLength(std::make_shared<utils::Scalar>(0)),
       m_muscleLength(std::make_shared<utils::Scalar>(0))
 
@@ -32,6 +34,8 @@ internal_forces::muscles::MuscleGeometry::MuscleGeometry(
     const utils::Vector3d& origin,
     const utils::Vector3d& insertion)
     : internal_forces::Geometry(origin, insertion),
+      m_fiberVelocity(std::make_shared<utils::Scalar>(0)),
+      m_fiberLengthJacobian(std::make_shared<utils::Matrix>()),
       m_muscleTendonLength(std::make_shared<utils::Scalar>(0)),
       m_muscleLength(std::make_shared<utils::Scalar>(0)) {}
 
@@ -46,6 +50,8 @@ void internal_forces::muscles::MuscleGeometry::DeepCopy(
     const internal_forces::muscles::MuscleGeometry& other) {
   internal_forces::Geometry::DeepCopy(other);
   *m_muscleLength = *other.m_muscleLength;
+  *m_fiberVelocity = *other.m_fiberVelocity;
+  *m_fiberLengthJacobian = *other.m_fiberLengthJacobian;
   *m_muscleTendonLength = *other.m_muscleTendonLength;
 }
 
@@ -117,6 +123,24 @@ internal_forces::muscles::MuscleGeometry::musculoTendonLength() const {
   return *m_muscleTendonLength;
 }
 
+const utils::Scalar& internal_forces::muscles::MuscleGeometry::velocity()
+    const {
+  // Retain the base class stale-velocity check.
+  Geometry::velocity();
+  return *m_fiberVelocity;
+}
+
+const utils::Scalar&
+internal_forces::muscles::MuscleGeometry::musculoTendonVelocity() const {
+  return Geometry::velocity();
+}
+
+const utils::Matrix&
+internal_forces::muscles::MuscleGeometry::fiberLengthJacobian() const {
+  Geometry::jacobianLength();
+  return *m_fiberLengthJacobian;
+}
+
 // --------------------------------------- //
 
 void internal_forces::muscles::MuscleGeometry::_updateKinematics(
@@ -129,8 +153,11 @@ void internal_forces::muscles::MuscleGeometry::_updateKinematics(
 
   // Compute the jacobian of the lengths
   computeJacobianLength();
+  const utils::Scalar cosPennation = cos(characteristics->pennationAngle());
+  *m_fiberLengthJacobian = jacobianLength() / cosPennation;
   if (Qdot != nullptr) {
-    velocity(*Qdot);
+    Geometry::velocity(*Qdot);
+    *m_fiberVelocity = *m_velocity / cosPennation;
     *m_isVelocityComputed = true;
   } else {
     *m_isVelocityComputed = false;

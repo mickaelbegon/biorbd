@@ -129,6 +129,16 @@ class BIORBD_API MuscleGeometry : public Geometry {
   ///
   const utils::Scalar& musculoTendonLength() const;
 
+  /// Fiber velocity, the time derivative of length(), in model length units/s.
+  const utils::Scalar& velocity() const;
+
+  /// Musculotendon path velocity. Use this with path force for virtual power.
+  const utils::Scalar& musculoTendonVelocity() const;
+
+  /// Derivative of fiber length with respect to Q; jacobianLength() remains
+  /// the musculotendon path Jacobian used for joint torque.
+  const utils::Matrix& fiberLengthJacobian() const;
+
  protected:
   ///
   /// \brief Actual function that implements the update of the kinematics
@@ -151,6 +161,8 @@ class BIORBD_API MuscleGeometry : public Geometry {
       internal_forces::PathModifiers* pathModifiers = nullptr);
 
   // Position des nodes dans le repere local
+  std::shared_ptr<utils::Scalar> m_fiberVelocity;
+  std::shared_ptr<utils::Matrix> m_fiberLengthJacobian;
   std::shared_ptr<utils::Scalar> m_muscleLength;  ///< length
   std::shared_ptr<utils::Scalar>
       m_muscleTendonLength;  ///< muscle tendon length
