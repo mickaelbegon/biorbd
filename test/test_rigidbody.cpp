@@ -51,6 +51,8 @@ static std::string modelWithRigidContactsExternalForces(
 static std::string modelWithSoftContactRigidContactsExternalForces(
     "models/cubeWithSoftContactsRigidContactsExternalForces.bioMod");
 static std::string modelWithSoftContact("models/cubeWithSoftContacts.bioMod");
+static std::string modelWithSoftContactFriction(
+    "models/cubeWithSoftContactsWithFriction.bioMod");
 
 TEST(Gravity, change) {
   Model model(modelPathForGeneralTesting);
@@ -421,6 +423,38 @@ TEST(SoftContacts, creation) {
       SCALAR_TO_DOUBLE(transitionVelocity, sphere.transitionVelocity());
       EXPECT_NEAR(transitionVelocity, 0.01, requiredPrecision);
     }
+  }
+}
+
+TEST(SoftContacts, frictionCoefficientsFromFile) {
+  Model model(modelWithSoftContactFriction);
+  rigidbody::SoftContacts contacts(model);
+  EXPECT_EQ(contacts.nbSoftContacts(), 2);
+
+  // Contact1 defines the friction coefficients in the file
+  {
+    const rigidbody::SoftContactSphere &sphere(
+        dynamic_cast<const rigidbody::SoftContactSphere &>(
+            contacts.softContact(0)));
+    SCALAR_TO_DOUBLE(muStatic, sphere.muStatic());
+    EXPECT_NEAR(muStatic, 1.1, requiredPrecision);
+    SCALAR_TO_DOUBLE(muDynamic, sphere.muDynamic());
+    EXPECT_NEAR(muDynamic, 0.9, requiredPrecision);
+    SCALAR_TO_DOUBLE(muViscous, sphere.muViscous());
+    EXPECT_NEAR(muViscous, 0.3, requiredPrecision);
+  }
+
+  // Contact2 does not, so it keeps the default values
+  {
+    const rigidbody::SoftContactSphere &sphere(
+        dynamic_cast<const rigidbody::SoftContactSphere &>(
+            contacts.softContact(1)));
+    SCALAR_TO_DOUBLE(muStatic, sphere.muStatic());
+    EXPECT_NEAR(muStatic, 0.8, requiredPrecision);
+    SCALAR_TO_DOUBLE(muDynamic, sphere.muDynamic());
+    EXPECT_NEAR(muDynamic, 0.7, requiredPrecision);
+    SCALAR_TO_DOUBLE(muViscous, sphere.muViscous());
+    EXPECT_NEAR(muViscous, 0.5, requiredPrecision);
   }
 }
 
