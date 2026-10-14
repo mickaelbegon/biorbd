@@ -1104,7 +1104,9 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             file.read(maxExcitation, variable);
           } else if (!property_tag.tolower().compare("pcsa")) {
             file.read(PCSA, variable);
-          } else if (!property_tag.tolower().compare("maxshorteningspeed")) {
+          } else if (
+              !property_tag.tolower().compare("maxshorteningspeed") ||
+              !property_tag.tolower().compare("maxvelocity")) {
             file.read(maxShorteningSpeed, variable);
           } else if (!property_tag.tolower().compare("fatigueparameters")) {
             while (file.read(subproperty_tag) &&
@@ -1141,6 +1143,10 @@ void Reader::readModelFile(const utils::Path &path, Model *model) {
             }
           } else if (!property_tag.tolower().compare("shapefactor")) {
             file.read(shapeFactor);
+          } else {
+            utils::Error::raise(
+                "Unknown muscle property " + property_tag + " in muscle " +
+                name);
           }
         }
         utils::Error::check(idxGroup != -1, "No muscle group was provided!");
