@@ -5,6 +5,9 @@ set(EXAMPLE_FILES
     "forwardDynamicsExample.cpp"
     "inverseDynamicsExample.cpp"
 )
+if (NOT BIORBD_USE_CASADI_MATH)
+    list(APPEND EXAMPLE_FILES "writeModelExample.cpp")
+endif()
 if (MODULE_MUSCLES)
     list(APPEND EXAMPLE_FILES "forwardDynamicsFromMusclesExample.cpp")
 endif()
@@ -28,11 +31,7 @@ foreach(FILE ${EXAMPLE_FILES})
 
     # Headers
     target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/include"
-        "${BIORBD_BINARY_DIR}/include"
-        "${RBDL_INCLUDE_DIR}"
         "${IPOPT_INCLUDE_DIR}"
-        "${MATH_BACKEND_INCLUDE_DIR}"
     )
 
     # Linker and instalation

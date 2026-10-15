@@ -1,8 +1,13 @@
 project(${BIORBD_NAME}_matlab)
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.14)
 
 find_package(Matlab REQUIRED COMPONENTS MX_LIBRARY)
 
+# Installation path
+set(Matlab_${BIORBD_NAME}_INSTALL_DIR "${Matlab_ROOT_DIR}/toolbox" CACHE PATH
+    "Toolbox path to install, please note that the default directory may
+    require administrator access"
+)
 
 # Get the file to compile
 set(CPP_FILES
@@ -31,10 +36,7 @@ foreach(CPP_FILE ${CPP_FILES})
 
     # Add headers
     target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/include"
-        "${BIORBD_BINARY_DIR}/include"
-        "${RBDL_INCLUDE_DIR}"
-        "${MATH_BACKEND_INCLUDE_DIR}"
+        "${IPOPT_INCLUDE_DIR}"
         "${Matlab_INCLUDE_DIRS}"
     )
 
@@ -50,17 +52,19 @@ foreach(CPP_FILE ${CPP_FILES})
             )
         endif(CMAKE_CL_64)
     elseif(APPLE)
-        if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+        if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
             set_target_properties(${PROJECT_NAME} PROPERTIES
                 SUFFIX ".mexmaci64"
                 PREFIX ""
             )
-        else(CMAKE_SIZEOF_VOID_P MATCHES "8")
+        elseif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64") 
             set_target_properties(${PROJECT_NAME} PROPERTIES
-                SUFFIX ".mexmaci64"
+                SUFFIX ".mexmaca64"
                 PREFIX ""
             )
-        endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
+        else()
+            message(FATAL_ERROR "Unknown architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}") 
+        endif ()
     else()
         if (CMAKE_SIZEOF_VOID_P MATCHES "8")
             set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -93,8 +97,3 @@ foreach(CPP_FILE ${CPP_FILES})
         DESTINATION "${Matlab_${BIORBD_NAME}_INSTALL_DIR}/${PROJECT_NAME}")
 endforeach(CPP_FILE)
 
-# Installation path
-set(Matlab_${BIORBD_NAME}_INSTALL_DIR "${Matlab_ROOT_DIR}/toolbox" CACHE PATH
-    "Toolbox path to install, please note that the default directory may
-    require administrator access"
-)

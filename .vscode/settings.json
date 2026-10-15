@@ -1,0 +1,25 @@
+{
+    "cmake.configureOnOpen": false,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google }",
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.rulers": [
+            120
+        ],
+    },
+    "[swig]": {
+        "editor.formatOnSave": false
+    },
+    "files.associations": {
+        "*.i": "swig",
+        "*.in": "swig"
+    }
+}
