@@ -42,13 +42,10 @@ void rigidbody::KalmanReconsIMU::DeepCopy(
 }
 
 void rigidbody::KalmanReconsIMU::manageOcclusionDuringIteration(
-    utils::Matrix &InvTp,
     utils::Vector &measure,
     const std::vector<size_t> &occlusion) {
   for (size_t i = 0; i < occlusion.size(); ++i)
     for (size_t j = occlusion[i] * 9; j < occlusion[i] * 9 + 9; ++j) {
-      InvTp(j, j) = 0;  // Artefact due to the fact that m_R has a value
-                        // at (j:j+2,j:j+2)
       measure[j] = 0;
     }
 }

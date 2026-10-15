@@ -97,12 +97,10 @@ class BIORBD_API KalmanReconsIMU : public KalmanRecons {
  protected:
   ///
   /// \brief Manage the occlusion during the iteration
-  /// \param InvTp The inverse of the Tp matrix
   /// \param measure The vector actual measurement to track
   /// \param occlusion The vector where occlusions occurs
   ///
   virtual void manageOcclusionDuringIteration(
-      utils::Matrix &InvTp,
       utils::Vector &measure,
       const std::vector<size_t> &occlusion);
 

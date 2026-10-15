@@ -54,29 +54,52 @@ void rigidbody::KalmanRecons::iteration(
     const utils::Vector &projectedMeasure,
     const utils::Matrix &Hessian,
     const std::vector<size_t> &occlusion) {
+  // The measurement matrix has the structure H = [J 0 0] (only Q is measured)
+  // and R is diagonal. Therefore, the m x m innovation matrix never needs to
+  // be inverted: with the Woodbury identity, the gain only requires the
+  // solution of a (nQ x nQ) system (m, the number of measures, is usually
+  // larger than nQ, the number of degrees-of-freedom).
+  const Eigen::Index nQ = static_cast<Eigen::Index>(*m_nbDof);
+
   // Prediction
   const utils::Vector &xkm(*m_A * *m_xp);
-  const utils::Matrix &Pkm(*m_A * *m_Pp * m_A->transpose() + *m_Q);
+  const Eigen::MatrixXd Pkm(*m_A * *m_Pp * m_A->transpose() + *m_Q);
+
+  // Occluded measures do not contribute (their rows of H are null)
+  manageOcclusionDuringIteration(measure, occlusion);
 
   // Correction
-  utils::Matrix InvTp((Hessian * Pkm * Hessian.transpose() + *m_R).inverse());
-  manageOcclusionDuringIteration(InvTp, measure, occlusion);
-  const utils::Matrix &K(Pkm * Hessian.transpose() * InvTp);  // Gain
+  const Eigen::MatrixXd J(Hessian.leftCols(nQ));  // m x nQ
+  const Eigen::VectorXd Rdiag(m_R->diagonal());
+  const Eigen::VectorXd RdiagInv(Rdiag.cwiseInverse());
+  const Eigen::MatrixXd Pq(Pkm.leftCols(nQ));  // n x nQ
+  const Eigen::MatrixXd JtRinv(
+      J.transpose() * RdiagInv.asDiagonal());  // nQ x m
+  // K = Pkm H' (H Pkm H' + R)^-1 = Pq (I + J' R^-1 J Pqq)^-1 J' R^-1
+  Eigen::MatrixXd G(
+      Eigen::MatrixXd::Identity(nQ, nQ) +
+      JtRinv * J * Pq.topRows(nQ));
+  const Eigen::MatrixXd X(G.partialPivLu().solve(JtRinv));  // nQ x m
+  const Eigen::MatrixXd K(Pq * X);                          // Gain, n x m
 
   *m_xp = xkm + K * (measure - projectedMeasure);  // New estimated state
-  const RigidBodyDynamics::Math::MatrixNd &temp(
-      utils::Matrix::Identity(3 * *m_nbDof, 3 * *m_nbDof) - K * Hessian);
-  *m_Pp = temp * Pkm * temp.transpose() + K * *m_R * K.transpose();
+
+  // Joseph form: P = (I - KH) Pkm (I - KH)' + K R K', where KH = [KJ 0 0]
+  const Eigen::MatrixXd KJ(K * J);  // n x nQ
+  const Eigen::MatrixXd Y(Pkm - KJ * Pkm.topRows(nQ));
+  Eigen::MatrixXd Pnew(Y - Y.leftCols(nQ) * KJ.transpose());
+  const Eigen::MatrixXd Z(
+      X * Rdiag.asDiagonal() * X.transpose());  // nQ x nQ
+  Pnew.noalias() += Pq * Z * Pq.transpose();
+  // Keep P symmetric against round-off errors
+  *m_Pp = 0.5 * (Pnew + Pnew.transpose());
 }
 
 void rigidbody::KalmanRecons::manageOcclusionDuringIteration(
-    utils::Matrix &InvTp,
     utils::Vector &measure,
     const std::vector<size_t> &occlusion) {
   for (size_t i = 0; i < occlusion.size(); ++i)
     for (size_t j = occlusion[i]; j < occlusion[i] + 1; ++j) {
-      InvTp(j, j) = 0;  // Artifact due to the fact that m_R has a value
-                        // at (j:j+2,j:j+2)
       measure(j) = 0;
     }
 }
