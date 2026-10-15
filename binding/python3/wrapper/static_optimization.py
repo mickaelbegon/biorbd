@@ -28,7 +28,8 @@ class StaticOptimization:
         tau = [GeneralizedTorque(to_biorbd_array_input(t)) for t in all_tau]
 
         optim = StaticOptimizationBiorbd(self._model.internal, q, qdot, tau)
-        optim.run()
+        # Solve the full force law used by the physical torque validation.
+        optim.run(False)
         muscles_activations = optim.finalSolution()
 
         for activation in muscles_activations:

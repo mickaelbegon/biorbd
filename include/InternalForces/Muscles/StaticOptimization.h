@@ -186,6 +186,15 @@ class BIORBD_API StaticOptimization {
   ///
   utils::Vector finalSolution(unsigned int index);
 
+  /// IPOPT return codes per attempted frame, also available after failure.
+  std::vector<int> solverStatuses() const;
+
+  /// Residual generalized forces used by the optimizer, in coordinate units.
+  utils::Vector finalResidual(unsigned int index) const;
+
+  /// Original-law muscular torque + residual - target, cached at solution.
+  utils::Vector finalTorqueError(unsigned int index) const;
+
  protected:
   Model& m_model;            ///< A reference to the model
   bool m_useResidualTorque;  ///< To use residual torque
@@ -201,6 +210,8 @@ class BIORBD_API StaticOptimization {
   int m_verbose;                 ///< Verbose level
   std::vector<Ipopt::SmartPtr<Ipopt::TNLP>>
       m_staticOptimProblem;  ///< The static optimization problem
+  std::vector<int> m_solverStatuses;
+  std::vector<utils::Vector> m_finalTorqueErrors;
   bool m_alreadyRun;         ///< If already ran the static optimization
 };
 
