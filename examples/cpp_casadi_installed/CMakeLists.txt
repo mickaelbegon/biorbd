@@ -17,6 +17,10 @@ endif()
 
 find_package(biorbd_casadi REQUIRED)
 find_package(RBDLCasadi REQUIRED)
+# Conda may resolve the common include prefix before the CasADi headers.
+if(EXISTS "${RBDLCasadi_INCLUDE_DIR}/rbdl-casadi/rbdl/rbdl.h")
+    set(RBDLCasadi_INCLUDE_DIR "${RBDLCasadi_INCLUDE_DIR}/rbdl-casadi")
+endif()
 find_package(Eigen3 REQUIRED)
 find_package(TinyXML REQUIRED)
 find_package(Casadi REQUIRED)
