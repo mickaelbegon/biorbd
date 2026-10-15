@@ -2,12 +2,19 @@
 name: biorbd_eigen
 channels:
 - conda-forge
-- default
 dependencies:
-- python >=3.10
-- eigen
-- rbdl >=3.3.0
+- python =3.11
+# Eigen 5 drops legacy CMake variables and requires C++14.
+- eigen =3.4.0
+- rbdl =3.3.1
 - scipy
 - ezc3d
 - tinyxml
 - ipopt
+# Keep the legacy GoogleTest CMake policies supported.
+- cmake >=3.14,<4
+- swig >=4,<5
+- numpy
+- pytest
+- git
+- pkgconfig
