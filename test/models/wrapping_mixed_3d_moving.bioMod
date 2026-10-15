@@ -1,0 +1,72 @@
+version 4
+segment base
+endsegment
+segment assembly
+    parent base
+    translations xyz
+    rotations xyz
+endsegment
+segment insertion
+    parent base
+    RT 0 0 0 xyz 0.23000000000000001 -0.025000000000000001 0.014999999999999999
+    translations xyz
+endsegment
+musclegroup path
+    OriginParent base
+    InsertionParent insertion
+endmusclegroup
+muscle route
+    Type hill
+    musclegroup path
+    OriginPosition -0.23000000000000001 -0.025000000000000001 -0.014999999999999999
+    InsertionPosition 0 0 0
+    optimalLength 0.5
+    maximalForce 100
+    tendonSlackLength 0.01
+    pennationAngle 0
+    maxVelocity 10
+endmuscle
+wrapping object-1
+    parent assembly
+    muscle route
+    musclegroup path
+    type ellipsoid
+    RTinMatrix 1
+    RT
+        0.99619469809174555 -0.004561379138762707 -0.087036298831283193 -0.12
+        0 0.99862953475457383 -0.052335956242943835 0
+        0.087155742747658166 0.052136802128782238 0.99482944788033301 -0.0060000000000000001
+        0 0 0 1
+    radii 0.048000000000000001 0.032000000000000001 0.043999999999999997
+    wrappingSide 1
+endwrapping
+wrapping object-2
+    parent assembly
+    muscle route
+    musclegroup path
+    type cylinder
+    RTinMatrix 1
+    RT
+        0.99862953475457383 -0.004561379138762707 0.052136802128782238 0
+        0 0.99619469809174555 0.087155742747658166 0.017000000000000001
+        -0.052335956242943835 -0.087036298831283193 0.99482944788033301 0.0040000000000000001
+        0 0 0 1
+    radius 0.034
+    length 0.1
+    wrappingSide 1
+endwrapping
+wrapping object-3
+    parent assembly
+    muscle route
+    musclegroup path
+    type torus
+    RTinMatrix 1
+    RT
+        0.99862953475457383 -0.004561379138762707 -0.052136802128782238 0.12
+        0 0.99619469809174555 -0.087155742747658166 0
+        0.052335956242943835 0.087036298831283193 0.99482944788033301 -0.002
+        0 0 0 1
+    majorradius 0.03
+    minorradius 0.015
+    wrappingSide 1
+endwrapping

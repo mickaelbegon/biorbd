@@ -156,6 +156,11 @@ public:
     ///
     const std::vector<utils::Vector3d>& pointsInGlobal() const;
 
+    /// Global trajectory samples, including curves for new WrappingSurface objects.
+    /// Legacy objects return their existing contact-node representation.
+    /// pointsInGlobal() retains the attachment/via/contact-node convention.
+    const std::vector<utils::Vector3d>& pathPointsInGlobal() const;
+
     ///
     /// \brief Return the previously computed muscle length
     /// \return The muscle lengh
@@ -172,6 +177,9 @@ public:
     /// \brief Return the previously computed muscle jacobian
     /// \return The muscle jacobian
     ///
+    /// For the new WrappingSurface solver, contacts use instantaneous parent-frame
+    /// material-point Jacobians. jacobianLength() uses the stationary contact
+    /// path; it does not approximate surface arcs by their chords.
     const utils::Matrix& jacobian() const;
 
     ///
@@ -304,6 +312,10 @@ protected:
     std::shared_ptr<utils::Vector3d> m_insertionInGlobal; ///< Position of the insertion node in the global reference
     std::shared_ptr<std::vector<utils::Vector3d>> m_pointsInGlobal; ///< Position of all the points in the global reference
     std::shared_ptr<std::vector<utils::Vector3d>> m_pointsInLocal; ///< Position of all the points in local
+    std::shared_ptr<std::vector<utils::Vector3d>> m_pathPointsInGlobal;
+    std::shared_ptr<std::vector<utils::Scalar>> m_surfaceSegmentLengths;
+    std::shared_ptr<std::vector<bool>> m_surfaceSegments;
+    std::shared_ptr<bool> m_surfacePath;
     std::shared_ptr<utils::Matrix> m_jacobian; ///<The jacobian matrix
     std::shared_ptr<utils::Matrix> m_G; ///< Internal matrix of the jacobian dimension to speed up calculation
     std::shared_ptr<utils::Matrix> m_jacobianLength; ///< The muscle length jacobian

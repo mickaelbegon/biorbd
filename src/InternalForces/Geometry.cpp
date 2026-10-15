@@ -2,6 +2,9 @@
 
 #include <rbdl/Model.h>
 #include <rbdl/Kinematics.h>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include "Utils/Error.h"
 #include "Utils/Matrix.h"
 #include "Utils/RotoTrans.h"
@@ -10,9 +13,17 @@
 #include "RigidBody/GeneralizedCoordinates.h"
 #include "RigidBody/GeneralizedVelocity.h"
 #include "InternalForces/WrappingObject.h"
+#include "InternalForces/WrappingSurface.h"
+#include "InternalForces/WrappingCylinder.h"
+#include "InternalForces/WrappingEllipsoid.h"
+#include "InternalForces/WrappingTorus.h"
 #include "InternalForces/PathModifiers.h"
 #include "InternalForces/ViaPoint.h"
 #include "InternalForces/Geometry.h"
+#include "WrappingNumericalKernel.h"
+#ifdef BIORBD_USE_CASADI_MATH
+#include "WrappingCasadi.h"
+#endif
 
 using namespace BIORBD_NAMESPACE;
 
@@ -25,6 +36,10 @@ internal_forces::Geometry::Geometry() :
                         (utils::Vector3d::Zero())),
     m_pointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
     m_pointsInLocal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_pathPointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_surfaceSegmentLengths(std::make_shared<std::vector<utils::Scalar>>()),
+    m_surfaceSegments(std::make_shared<std::vector<bool>>()),
+    m_surfacePath(std::make_shared<bool>(false)),
     m_jacobian(std::make_shared<utils::Matrix>()),
     m_G(std::make_shared<utils::Matrix>()),
     m_jacobianLength(std::make_shared<utils::Matrix>()),
@@ -48,6 +63,10 @@ internal_forces::Geometry::Geometry(
                         (utils::Vector3d::Zero())),
     m_pointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
     m_pointsInLocal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_pathPointsInGlobal(std::make_shared<std::vector<utils::Vector3d>>()),
+    m_surfaceSegmentLengths(std::make_shared<std::vector<utils::Scalar>>()),
+    m_surfaceSegments(std::make_shared<std::vector<bool>>()),
+    m_surfacePath(std::make_shared<bool>(false)),
     m_jacobian(std::make_shared<utils::Matrix>()),
     m_G(std::make_shared<utils::Matrix>()),
     m_jacobianLength(std::make_shared<utils::Matrix>()),
@@ -82,6 +101,10 @@ void internal_forces::Geometry::DeepCopy(const internal_forces::Geometry &other)
         (*m_pointsInLocal)[i] = (*other.m_pointsInLocal)[i].DeepCopy();
     }
     *m_jacobian = *other.m_jacobian;
+    *m_pathPointsInGlobal = *other.m_pathPointsInGlobal;
+    *m_surfaceSegmentLengths = *other.m_surfaceSegmentLengths;
+    *m_surfaceSegments = *other.m_surfaceSegments;
+    *m_surfacePath = *other.m_surfacePath;
     *m_G = *other.m_G;
     *m_jacobianLength = *other.m_jacobianLength;
     *m_length = *other.m_length;
@@ -228,6 +251,12 @@ const std::vector<utils::Vector3d>
 }
 
 // Return the length and muscular velocity
+const std::vector<utils::Vector3d>& internal_forces::Geometry::pathPointsInGlobal() const
+{
+    utils::Error::check(*m_isGeometryComputed,"Geometry must be computed before reading the trajectory");
+    return *m_surfacePath ? *m_pathPointsInGlobal : *m_pointsInGlobal;
+}
+
 const utils::Scalar& internal_forces::Geometry::length() const
 {
     utils::Error::check(*m_isGeometryComputed,
@@ -320,6 +349,12 @@ const utils::Vector3d &internal_forces::Geometry::insertionInGlobal(
 void internal_forces::Geometry::setPointsInGlobal(
     std::vector<utils::Vector3d> &ptsInGlobal)
 {
+    *m_isGeometryComputed = false;
+    *m_isVelocityComputed = false;
+    *m_surfacePath = false;
+    m_surfaceSegments->clear();
+    m_surfaceSegmentLengths->clear();
+    m_pathPointsInGlobal->clear();
     utils::Error::check(ptsInGlobal.size() >= 2,
                                 "ptsInGlobal must at least have an origin and an insertion");
     m_pointsInLocal->clear(); // In this mode, we don't need the local, because the Jacobian of the points has to be given as well
@@ -331,9 +366,235 @@ void internal_forces::Geometry::setPointsInGlobal(
     const rigidbody::GeneralizedCoordinates &Q,
     internal_forces::PathModifiers *pathModifiers)
 {
+    *m_isGeometryComputed = false;
+    *m_isVelocityComputed = false;
     // Output varible (reset to zero)
     m_pointsInLocal->clear();
     m_pointsInGlobal->clear();
+
+    *m_surfacePath = false;
+    m_pathPointsInGlobal->clear();
+    m_surfaceSegments->clear();
+    m_surfaceSegmentLengths->clear();
+    if(pathModifiers==nullptr || pathModifiers->nbObjects()==0) {
+        m_pointsInLocal->push_back(originInLocal());
+        m_pointsInLocal->push_back(insertionInLocal());
+        m_pointsInGlobal->push_back(originInGlobal(model,Q));
+        m_pointsInGlobal->push_back(insertionInGlobal(model,Q));
+        setJacobianDimension(model);
+        return;
+    }
+    bool hasSurface=false;
+    for(unsigned int i=0;i<pathModifiers->nbObjects();++i)
+        hasSurface=hasSurface || dynamic_cast<WrappingSurface*>(&pathModifiers->object(i))!=nullptr;
+    if(hasSurface) {
+#ifdef BIORBD_USE_CASADI_MATH
+        utils::Error::check(model.nbQ()==model.dof_count,
+            "CasADi new wrapping surfaces require Q_size == dof_count; quaternion configurations are unsupported");
+        // Build the immutable kinematic snapshot with an independent pure Q.
+        // This also accepts a caller's constant Q or a slice of a larger graph.
+        rigidbody::Joints snapshot=model.DeepCopy();
+        const casadi::MX input=casadi::MX::sym("wrapping_q",model.nbQ());
+        const rigidbody::GeneralizedCoordinates coordinates(input);
+        snapshot.UpdateKinematicsCustom(&coordinates);
+        std::vector<casadi::MX> anchors;
+        std::vector<utils::Vector3d> localAnchors;
+        std::vector<casadi::MX> poses;
+        std::vector<WrappingSurface*> surfaces;
+        std::vector<::biorbd::wrapping::Shape> shapes;
+        std::vector<std::vector<size_t>> regions(1);
+        const auto anchor=[&](const utils::Vector3d& node) {
+            const utils::Vector3d global(RigidBodyDynamics::CalcBodyToBaseCoordinates(
+                snapshot,coordinates,snapshot.GetBodyId(node.parent().c_str()),node,false));
+            anchors.push_back(global);localAnchors.push_back(node);
+        };
+        const auto dimension=[](const casadi::MX& value) {
+            utils::Error::check(casadi::MX::symvar(value).empty(),
+                "CasADi wrapping dimensions must be constant numerical values");
+            return static_cast<double>(casadi::MX::evalf(value));
+        };
+        anchor(originInLocal());
+        for(unsigned int i=0;i<pathModifiers->nbObjects();++i) {
+            utils::Vector3d& object=pathModifiers->object(i);
+            if(object.typeOfNode()==utils::NODE_TYPE::VIA_POINT) {
+                anchor(object);regions.emplace_back();
+                continue;
+            }
+            WrappingSurface* surface=dynamic_cast<WrappingSurface*>(&object);
+            utils::Error::check(surface!=nullptr,
+                "Legacy wrapping objects cannot yet be combined with the new surface solver");
+            using Shape=::biorbd::wrapping::Shape;
+            std::unique_ptr<WrappingSurface> copy;
+            if(const WrappingCylinder* cylinder=dynamic_cast<const WrappingCylinder*>(surface)) {
+                shapes.emplace_back(Shape::Cylinder,Eigen::Vector3d(
+                    dimension(cylinder->radius()),dimension(cylinder->length()),0),surface->wrappingSide());
+                copy.reset(new WrappingCylinder(*cylinder));
+            } else if(const WrappingEllipsoid* ellipsoid=dynamic_cast<const WrappingEllipsoid*>(surface)) {
+                const auto& radii=ellipsoid->radii();
+                shapes.emplace_back(Shape::Ellipsoid,Eigen::Vector3d(
+                    dimension(radii(0)),dimension(radii(1)),dimension(radii(2))),surface->wrappingSide());
+                copy.reset(new WrappingEllipsoid(*ellipsoid));
+            } else if(const WrappingTorus* torus=dynamic_cast<const WrappingTorus*>(surface)) {
+                shapes.emplace_back(Shape::Torus,Eigen::Vector3d(
+                    dimension(torus->majorRadius()),dimension(torus->minorRadius()),0),surface->wrappingSide());
+                copy.reset(new WrappingTorus(*torus));
+            } else utils::Error::raise("Unknown wrapping surface");
+            const casadi::MX pose=copy->RT(snapshot,coordinates,false);
+            poses.push_back(casadi::MX::reshape(pose,16,1));
+            regions.back().push_back(surfaces.size());surfaces.push_back(surface);
+        }
+        anchor(insertionInLocal());
+        std::vector<casadi::MX> values=anchors;
+        values.insert(values.end(),poses.begin(),poses.end());
+        const casadi::MX kinematicVector=casadi::MX::densify(casadi::MX::vertcat(values));
+        const casadi::Function kinematics("wrapping_kinematics",{input},
+            {kinematicVector,casadi::MX::densify(casadi::MX::jacobian(kinematicVector,input))});
+        const CasadiWrappingExpressions expressions=makeCasadiWrapping(
+            kinematics,static_cast<const casadi::MX&>(Q),shapes,regions,anchors.size());
+        *m_surfacePath=true;
+        *m_length=expressions.length;
+        *m_jacobianLength=utils::Matrix(expressions.gradient);
+        const auto append=[&](const utils::Vector3d& local) {
+            const size_t i=m_pointsInGlobal->size();
+            m_pointsInGlobal->push_back(utils::Vector3d(RigidBodyDynamics::Math::VectorNd(casadi::MX(expressions.points(casadi::Slice(static_cast<casadi_int>(3*i),static_cast<casadi_int>(3*i+3)))))));
+            m_pointsInLocal->push_back(local);
+        };
+        append(originInLocal());
+        for(size_t r=0;r<regions.size();++r) {
+            for(size_t index : regions[r]) {
+                WrappingSurface* surface=surfaces[index];
+                const unsigned int body=model.GetBodyId(surface->parent().c_str());
+                for(int contact=0;contact<2;++contact) {
+                    const size_t i=m_pointsInGlobal->size();
+                    const utils::Vector3d global(RigidBodyDynamics::Math::VectorNd(casadi::MX(expressions.points(casadi::Slice(static_cast<casadi_int>(3*i),static_cast<casadi_int>(3*i+3))))));
+                    const utils::Vector3d local(RigidBodyDynamics::CalcBaseToBodyCoordinates(
+                        model,Q,body,global,false),contact==0 ? "wrap_entry" : "wrap_exit",surface->parent());
+                    append(local);
+                }
+            }
+            append(localAnchors[r+1]);
+        }
+        *m_originInGlobal=m_pointsInGlobal->front();
+        *m_insertionInGlobal=m_pointsInGlobal->back();
+        *m_pathPointsInGlobal=*m_pointsInGlobal;
+        setJacobianDimension(model);
+        return;
+#else
+        namespace kernel=::biorbd::wrapping;
+        const utils::Vector3d start=originInGlobal(model,Q);
+        const utils::Vector3d finish=insertionInGlobal(model,Q);
+        std::vector<WrappingSurface*> surfaces;
+        // Clear every surface cache before assembly so any exception leaves no
+        // previously accepted active curve available through cached wrapPoints.
+        for(unsigned int i=0;i<pathModifiers->nbObjects();++i) {
+            WrappingSurface* surface=dynamic_cast<WrappingSurface*>(&pathModifiers->object(i));
+            if(!surface) continue;
+            surface->m_active=false;
+            surface->m_arcLength=0;
+            surface->m_surfacePoints.clear();
+            surface->m_contact1.DeepCopy(start);
+            surface->m_contact2.DeepCopy(finish);
+        }
+        std::vector<kernel::Object> objects;
+        std::vector<kernel::Seed> seeds;
+        std::vector<kernel::Region> regions(1);
+        std::vector<utils::Vector3d> localAnchors;
+        localAnchors.push_back(originInLocal());
+        regions.back().start=Eigen::Vector3d(start);
+        for(unsigned int i=0;i<pathModifiers->nbObjects();++i) {
+            utils::Vector3d& object=pathModifiers->object(i);
+            if(object.typeOfNode()==utils::NODE_TYPE::VIA_POINT) {
+                const utils::Vector3d global(RigidBodyDynamics::CalcBodyToBaseCoordinates(
+                    model,Q,model.GetBodyId(object.parent().c_str()),object,false));
+                regions.back().end=Eigen::Vector3d(global);
+                localAnchors.push_back(object);
+                regions.emplace_back();
+                regions.back().start=Eigen::Vector3d(global);
+                continue;
+            }
+            WrappingSurface* surface=dynamic_cast<WrappingSurface*>(&object);
+            utils::Error::check(surface!=nullptr,
+                "Legacy wrapping objects cannot yet be combined with the new surface solver");
+            using Shape=kernel::Shape;
+            const utils::RotoTrans pose=surface->RT(model,Q,false);
+            if(const WrappingCylinder* cylinder=dynamic_cast<const WrappingCylinder*>(surface)) {
+                objects.emplace_back(Shape(Shape::Cylinder,Eigen::Vector3d(
+                    cylinder->radius(),cylinder->length(),0),surface->wrappingSide()),Eigen::Matrix4d(pose));
+            } else if(const WrappingEllipsoid* ellipsoid=dynamic_cast<const WrappingEllipsoid*>(surface)) {
+                objects.emplace_back(Shape(Shape::Ellipsoid,Eigen::Vector3d(ellipsoid->radii()),
+                    surface->wrappingSide()),Eigen::Matrix4d(pose));
+            } else if(const WrappingTorus* torus=dynamic_cast<const WrappingTorus*>(surface)) {
+                objects.emplace_back(Shape(Shape::Torus,Eigen::Vector3d(
+                    torus->majorRadius(),torus->minorRadius(),0),surface->wrappingSide()),Eigen::Matrix4d(pose));
+            } else utils::Error::raise("Unknown wrapping surface");
+            kernel::Seed seed;
+            seed.parameters=surface->m_geodesicSeed;
+            seed.kind=objects.back().shape.kind;
+            seed.side=objects.back().shape.side;
+            seed.dimensions=objects.back().shape.dimensions;
+            if(!seed.parameters.empty()) {
+                seed.start=Eigen::Vector3d(surface->m_geodesicStart);
+                seed.end=Eigen::Vector3d(surface->m_geodesicEnd);
+            }
+            seeds.push_back(seed);
+            regions.back().objects.push_back(surfaces.size());
+            surfaces.push_back(surface);
+        }
+        regions.back().end=Eigen::Vector3d(finish);
+        localAnchors.push_back(insertionInLocal());
+
+        // The kernel checks the complete path, including collisions across
+        // vias. Warm seeds are owned by value and committed only after global
+        // acceptance; failed proposals cannot alter the previous accepted seed.
+        const kernel::PathResult result=kernel::solvePath(objects,regions,&seeds);
+        for(size_t i=0;i<surfaces.size();++i) {
+            WrappingSurface* surface=surfaces[i];
+            const kernel::Contact& contact=result.contacts[i];
+            surface->m_geodesicSeed=seeds[i].parameters;
+            surface->m_geodesicStart.DeepCopy(utils::Vector3d(seeds[i].start));
+            surface->m_geodesicEnd.DeepCopy(utils::Vector3d(seeds[i].end));
+            surface->m_active=contact.active;
+            surface->m_arcLength=contact.length;
+            surface->m_contact1.DeepCopy(utils::Vector3d(contact.entry));
+            surface->m_contact2.DeepCopy(utils::Vector3d(contact.exit));
+            for(const auto& point:contact.samples)
+                surface->m_surfacePoints.push_back(utils::Vector3d(point));
+        }
+        *m_surfacePath=true;
+        m_pointsInLocal->push_back(localAnchors.front());
+        m_pointsInGlobal->push_back(start);
+        m_pathPointsInGlobal->push_back(start);
+        const auto appendNode=[&](const utils::Vector3d& global,
+            const utils::Vector3d& local,bool arc,double arcLength) {
+            m_pointsInGlobal->push_back(global);
+            m_pointsInLocal->push_back(local);
+            m_surfaceSegments->push_back(arc);
+            m_surfaceSegmentLengths->push_back(arcLength);
+        };
+        for(size_t r=0;r<regions.size();++r) {
+            for(size_t index:regions[r].objects) {
+                const kernel::Contact& contact=result.contacts[index];
+                if(!contact.active) continue;
+                WrappingSurface* surface=surfaces[index];
+                const unsigned int body=model.GetBodyId(surface->parent().c_str());
+                const utils::Vector3d entry(contact.entry),exit(contact.exit);
+                const utils::Vector3d localEntry(RigidBodyDynamics::CalcBaseToBodyCoordinates(
+                    model,Q,body,entry,false),"wrap_entry",surface->parent());
+                const utils::Vector3d localExit(RigidBodyDynamics::CalcBaseToBodyCoordinates(
+                    model,Q,body,exit,false),"wrap_exit",surface->parent());
+                appendNode(entry,localEntry,false,0.);
+                appendNode(exit,localExit,true,contact.length);
+                const auto& samples=surface->m_surfacePoints;
+                m_pathPointsInGlobal->insert(m_pathPointsInGlobal->end(),samples.begin(),samples.end());
+            }
+            const utils::Vector3d end(regions[r].end);
+            appendNode(end,localAnchors[r+1],false,0.);
+            m_pathPointsInGlobal->push_back(end);
+        }
+        setJacobianDimension(model);
+        return;
+#endif
+    }
 
     // Do not apply on wrapping objects
     if (pathModifiers->nbWraps()!=0) {
@@ -413,7 +674,17 @@ void internal_forces::Geometry::setPointsInGlobal(
 const utils::Scalar& internal_forces::Geometry::length(
     internal_forces::PathModifiers *pathModifiers)
 {
+#ifdef BIORBD_USE_CASADI_MATH
+    if(*m_surfacePath) return *m_length;
+#endif
     *m_length = 0;
+
+    if(*m_surfacePath) {
+        for(size_t i=0;i<m_surfaceSegments->size();++i)
+            *m_length += (*m_surfaceSegments)[i] ? (*m_surfaceSegmentLengths)[i] :
+                ((*m_pointsInGlobal)[i+1]-(*m_pointsInGlobal)[i]).norm();
+        return *m_length;
+    }
 
     // because we can't combine, test the first (0) will let us know all the types if more than one
     if (pathModifiers != nullptr && pathModifiers->nbWraps()!=0) {
@@ -480,11 +751,21 @@ void internal_forces::Geometry::jacobian(
 
 void internal_forces::Geometry::computeJacobianLength()
 {
+#ifdef BIORBD_USE_CASADI_MATH
+    if(*m_surfacePath) return; // Exact stationary gradient supplied by the callback.
+#endif
     *m_jacobianLength = utils::Matrix::Zero(1, m_jacobian->cols());
 
     // jacobian approximates as if there were no wrapping object
     const std::vector<utils::Vector3d>& p = *m_pointsInGlobal;
     for (unsigned int i=0; i<p.size()-1 ; ++i) {
+        // At a stationary frictionless contact path, sliding-contact terms
+        // cancel by tangency. Surface arc lengths are invariant under rigid
+        // object motion, so only free-segment material velocities contribute.
+        if(*m_surfacePath && (*m_surfaceSegments)[i]) continue;
+#ifndef BIORBD_USE_CASADI_MATH
+        if((p[i+1]-p[i]).norm() <= 1e-14) continue;
+#endif
         *m_jacobianLength += (( p[i+1] - p[i] ).transpose() * (jacobian(i+1) - jacobian(
                                   i)))
                              /

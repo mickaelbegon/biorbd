@@ -85,6 +85,13 @@ ELSEIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 	MESSAGE(FATAL_ERROR "Compiler is not GNU gcc! Aborting...")
 ENDIF() # CHECK VALID COMPILER
 
+# GCC can flag the address-only stack probe in bundled GoogleTest at -O0.
+# Keep that warning visible without making it fatal in the test dependency.
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TARGET gtest)
+    target_compile_options(gtest PRIVATE
+        $<$<CONFIG:Coverage>:-Wno-error=maybe-uninitialized>)
+ENDIF()
+
 SET(CMAKE_CXX_FLAGS_COVERAGE
     "-g -O0 --coverage -fprofile-arcs -ftest-coverage"
     CACHE STRING "Flags used by the C++ compiler during coverage builds."

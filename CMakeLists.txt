@@ -26,6 +26,8 @@ option(MODULE_STATIC_OPTIM
     "If Static optimization should be compiled" ON)
 option(MODULE_VTP_FILES_READER 
     "If reader for geometry vtp files from opensim should be compiled" ON)
+option(BIORBD_WITH_SIMBODY_WRAPPING
+    "Use optional Simbody Scholz2015 for spatial wrapping with native fallback" OFF)
 option(BUILD_EXAMPLE 
     "Build a C++ example" ON)
 option(BUILD_DOC 
@@ -68,8 +70,22 @@ elseif(${MATH_LIBRARY_BACKEND} STREQUAL "Casadi")
 endif()
 set (BIORBD_NAME ${PROJECT_NAME}_${BIORBD_LIB_SUFFIX})
 
+# The double-only wrapping kernel uses Eigen privately with both backends.
+find_package(Eigen3 REQUIRED)
+if(BIORBD_WITH_SIMBODY_WRAPPING)
+    # Current Simbody exports BLAS/LAPACK targets and C++20 requirements.
+    # Keep the original CMake/compiler requirements when this option is OFF.
+    if(CMAKE_VERSION VERSION_LESS "3.21")
+        message(FATAL_ERROR "BIORBD_WITH_SIMBODY_WRAPPING requires CMake >= 3.21")
+    endif()
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    find_package(BLAS REQUIRED)
+    find_package(LAPACK REQUIRED)
+    find_package(Simbody 3.9 CONFIG REQUIRED)
+    message(STATUS "Hybrid spatial wrapping: Simbody Scholz2015 + native fallback")
+endif()
 if(${MATH_LIBRARY_BACKEND} STREQUAL "Eigen3")
-    find_package(Eigen3 REQUIRED)
     set(MATH_BACKEND_INCLUDE_DIR "${EIGEN3_INCLUDE_DIR}")
     set(MATH_BACKEND_LIBRARIES "")
     find_package(RBDL REQUIRED)

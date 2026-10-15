@@ -1,0 +1,43 @@
+version 4
+
+segment base
+    RTinMatrix 1
+    RT
+        1 0 0 0
+        0 1 0 0
+        0 0 1 0
+        0 0 0 1
+endsegment
+
+musclegroup path
+    OriginParent base
+    InsertionParent base
+endmusclegroup
+
+muscle route
+    Type hill
+    musclegroup path
+    OriginPosition -0.16200860796845015 0.018412222573000726 -0.015466124402942871
+    InsertionPosition 0.15853564441511156 -0.038108377633244886 0.015466124402942871
+    optimalLength 0.5
+    maximalForce 100
+    tendonSlackLength 0.01
+    pennationAngle 0
+    maxVelocity 10
+endmuscle
+
+wrapping obstacle-1
+    parent base
+    muscle route
+    musclegroup path
+    type cylinder
+    RTinMatrix 1
+    RT
+        0.93660783080024856 0.17364817766693033 0.30432233187297808 0
+        -0.16514923091291264 0.98480775301220802 -0.053660237941321673 0
+        -0.3090169943749474 0 0.95105651629515353 0
+        0 0 0 1
+    radius 0.050000000000000003
+    length 0.17999999999999999
+    wrappingSide 1
+endwrapping

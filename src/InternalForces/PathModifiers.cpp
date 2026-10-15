@@ -6,6 +6,9 @@
 #include "InternalForces/ViaPoint.h"
 #include "InternalForces/WrappingSphere.h"
 #include "InternalForces/WrappingHalfCylinder.h"
+#include "InternalForces/WrappingCylinder.h"
+#include "InternalForces/WrappingEllipsoid.h"
+#include "InternalForces/WrappingTorus.h"
 
 using namespace BIORBD_NAMESPACE;
 
@@ -30,8 +33,35 @@ void internal_forces::PathModifiers::DeepCopy(const
 {
     m_obj->resize(other.m_obj->size());
     for (unsigned int i=0; i<other.m_obj->size(); ++i) {
-        (*m_obj)[i] = std::make_shared<utils::Vector3d>();
-        *(*m_obj)[i] = (*other.m_obj)[i]->DeepCopy();
+        const utils::Vector3d& object = *(*other.m_obj)[i];
+        switch (object.typeOfNode()) {
+        case utils::NODE_TYPE::WRAPPING_CYLINDER:
+            (*m_obj)[i] = std::make_shared<WrappingCylinder>(
+                static_cast<const WrappingCylinder&>(object).DeepCopy());
+            break;
+        case utils::NODE_TYPE::WRAPPING_ELLIPSOID:
+            (*m_obj)[i] = std::make_shared<WrappingEllipsoid>(
+                static_cast<const WrappingEllipsoid&>(object).DeepCopy());
+            break;
+        case utils::NODE_TYPE::WRAPPING_TORUS:
+            (*m_obj)[i] = std::make_shared<WrappingTorus>(
+                static_cast<const WrappingTorus&>(object).DeepCopy());
+            break;
+        case utils::NODE_TYPE::WRAPPING_HALF_CYLINDER:
+            (*m_obj)[i] = std::make_shared<WrappingHalfCylinder>(
+                static_cast<const WrappingHalfCylinder&>(object).DeepCopy());
+            break;
+        case utils::NODE_TYPE::WRAPPING_SPHERE:
+            (*m_obj)[i] = std::make_shared<WrappingSphere>(
+                static_cast<const WrappingSphere&>(object).DeepCopy());
+            break;
+        case utils::NODE_TYPE::VIA_POINT:
+            (*m_obj)[i] = std::make_shared<ViaPoint>(
+                static_cast<const ViaPoint&>(object).DeepCopy());
+            break;
+        default:
+            utils::Error::raise("Unknown path modifier in DeepCopy");
+        }
     }
     *m_nbWraps = *other.m_nbWraps;
     *m_nbVia = *other.m_nbVia;
@@ -44,7 +74,19 @@ void internal_forces::PathModifiers::addPathChanger(
 {
 
     // Add a muscle to the pool of muscle depending on type
-    if (object.typeOfNode() == utils::NODE_TYPE::WRAPPING_SPHERE) {
+    if (object.typeOfNode() == utils::NODE_TYPE::WRAPPING_CYLINDER) {
+        m_obj->push_back(std::make_shared<WrappingCylinder>(
+            dynamic_cast<WrappingCylinder&>(object)));
+        ++*m_nbWraps;
+    } else if (object.typeOfNode() == utils::NODE_TYPE::WRAPPING_ELLIPSOID) {
+        m_obj->push_back(std::make_shared<WrappingEllipsoid>(
+            dynamic_cast<WrappingEllipsoid&>(object)));
+        ++*m_nbWraps;
+    } else if (object.typeOfNode() == utils::NODE_TYPE::WRAPPING_TORUS) {
+        m_obj->push_back(std::make_shared<WrappingTorus>(
+            dynamic_cast<WrappingTorus&>(object)));
+        ++*m_nbWraps;
+    } else if (object.typeOfNode() == utils::NODE_TYPE::WRAPPING_SPHERE) {
         utils::Error::check(*m_nbVia == 0,
                                     "Cannot mix via points and wrapping objects yet");
         m_obj->push_back(std::make_shared<internal_forces::WrappingSphere>(
@@ -58,8 +100,11 @@ void internal_forces::PathModifiers::addPathChanger(
                              dynamic_cast <internal_forces::WrappingHalfCylinder&> (object)));
         ++*m_nbWraps;
     } else if (object.typeOfNode() == utils::NODE_TYPE::VIA_POINT) {
-        utils::Error::check(*m_nbWraps == 0,
-                                    "Cannot mix via points and wrapping objects yet");
+        for (const auto& existing : *m_obj) {
+            utils::Error::check(existing->typeOfNode() != utils::NODE_TYPE::WRAPPING_SPHERE &&
+                existing->typeOfNode() != utils::NODE_TYPE::WRAPPING_HALF_CYLINDER,
+                "Cannot mix legacy wrapping and via points yet");
+        }
         m_obj->push_back(std::make_shared<internal_forces::ViaPoint>(
                              dynamic_cast <internal_forces::ViaPoint&> (object)));
         ++*m_nbVia;
@@ -100,7 +145,5 @@ const utils::Vector3d& internal_forces::PathModifiers::object(
                                 "Idx asked is higher than number of wrapping objects");
     return *(*m_obj)[idx];
 }
-
-
 
 

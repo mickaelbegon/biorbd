@@ -2,12 +2,21 @@
 name: biorbd_casadi
 channels:
 - conda-forge
-- default
 dependencies:
-- python >=3.10
-- casadi
-- rbdl
+- python =3.11
+- casadi =3.7.2
+# Retain legacy Eigen CMake variables and C++11 support for both backends.
+- eigen =3.4.0
+- rbdl =3.3.1
 - scipy
 - ezc3d
 - tinyxml
 - ipopt
+# Keep the legacy GoogleTest CMake policies supported.
+- cmake >=3.14,<4
+# SWIG 4.0.2 incorrectly marks concrete wrapping surfaces as abstract.
+- swig >=4.3.1,<4.4
+- numpy
+- pytest
+- git
+- pkgconfig

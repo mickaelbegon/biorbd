@@ -1,0 +1,49 @@
+version 4
+
+segment base
+endsegment
+
+segment obstacle
+    parent base
+    translations xyz
+    rotations xyz
+endsegment
+
+segment insertion
+    parent base
+    RT 0 0 0 xyz 0.13 0.070000000000000007 -0.01
+    translations xyz
+endsegment
+
+musclegroup path
+    OriginParent base
+    InsertionParent insertion
+endmusclegroup
+
+muscle route
+    Type hill
+    musclegroup path
+    OriginPosition 0 -0.037999999999999999 -0.029999999999999999
+    InsertionPosition 0 0 0
+    optimalLength 0.5
+    maximalForce 100
+    tendonSlackLength 0.01
+    pennationAngle 0
+    maxVelocity 10
+endmuscle
+
+wrapping obstacle
+    parent obstacle
+    muscle route
+    musclegroup path
+    type torus
+    RTinMatrix 1
+    RT
+        1 0 0 0
+        0 1 0 0
+        0 0 1 0
+        0 0 0 1
+    majorradius 0.065000000000000002
+    minorradius 0.021000000000000001
+    wrappingSide 1
+endwrapping
