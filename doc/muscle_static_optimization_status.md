@@ -12,6 +12,8 @@ Residual vectors use nbGeneralizedTorque(), including quaternion models.
 
 Integrate the separate constraint correction before using the affine path:
 this check intentionally rejects physically incorrect historical solutions.
-The status-only regression suite uses `run(false)` to test the full force law.
+The status-only regression suite and the Python wrapper use `run(false)` to
+solve the full force law. The wrapper therefore retains the solver-status and
+physical-torque checks without selecting the uncorrected affine path.
 
 Tracking issue: https://github.com/pyomeca/biorbd/issues/402
