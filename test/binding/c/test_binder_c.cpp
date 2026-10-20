@@ -72,7 +72,7 @@ TEST(BinderC, markers)
     EXPECT_STREQ(newMarker.parent().c_str(), model->segment(1).name().c_str());
     EXPECT_EQ(newMarker.isTechnical(), false);
     EXPECT_EQ(newMarker.isAnatomical(), true);
-    EXPECT_STREQ(newMarker.axesToRemove().c_str(), "x");
+    EXPECT_STREQ(newMarker.axesToRemoveAsString().c_str(), "x");
 
     // Markers in local reference frame
     double *dMarkersInLocal = new double[model->nbMarkers()*3];
@@ -116,18 +116,6 @@ TEST(BinderC, jcs)
                             requiredPrecision);
             }
     delete[] dRtInGlobal;
-
-    // JCS in local reference frame
-    double *dRtInLocal = new double[model->nbSegment()*4*4];
-    c_globalJCS(model, dQ, dRtInLocal);
-    std::vector<utils::RotoTrans> jcsInLocal(model->allGlobalJCS());
-    for (unsigned int i=0; i<model->nbSegment(); ++i)
-        for (unsigned int row=0; row<4; ++row)
-            for (unsigned int col=0; col<4; ++col) {
-                EXPECT_NEAR(dRtInLocal[i*16+col*4+row], jcsInLocal[i](row, col),
-                            requiredPrecision);
-            }
-    delete[] dRtInLocal;
 
     delete[] dQ;
     c_deleteBiorbdModel(model);

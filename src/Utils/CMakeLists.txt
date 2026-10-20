@@ -10,10 +10,13 @@ set(SRC_LIST_MODULE
     "${CMAKE_CURRENT_SOURCE_DIR}/IfStream.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Path.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Matrix.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Matrix2d.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Matrix3d.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Node.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Scalar.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Vector2d.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Vector3d.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SpatialTransform.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SpatialVector.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Range.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Rotation.cpp"
@@ -45,13 +48,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "_debug")
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_SOURCE_DIR}/include"
     "${BIORBD_BINARY_DIR}/include"
-    "${RBDL_INCLUDE_DIR}"
-    "${MATH_BACKEND_INCLUDE_DIR}"
+    "${INSTALL_DEPENDENCIES_PREFIX}/include"
 )
-
 target_link_libraries(${PROJECT_NAME}
-    "${RBDL_LIBRARY}"
-    "${MATH_BACKEND_LIBRARIES}"
+    RBDL::RBDL
+    ${MATH_BACKEND_LIBRARIES}
 )
 
 # Installation

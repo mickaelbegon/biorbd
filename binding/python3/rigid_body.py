@@ -26,6 +26,26 @@ def marker_index(model, marker_name: str) -> int:
     except ValueError:
         raise ValueError(f"{marker_name} is not in the biorbd model")
 
+def contact_index(model, contact_name: str) -> int:
+    """
+    Return the index in the model of the desired contact point.
+    A ValueError is raised if the marker is not in the model
+
+    Parameters
+    ----------
+    model: biorbd.Model
+        The biorbd model
+    contact_name: str
+        The name of the contact to get the index from
+    Returns
+    -------
+    The index of the contact.
+    """
+
+    try:
+        return [n.to_string() for n in model.contactNames()].index(contact_name)
+    except ValueError:
+        raise ValueError(f"{contact_name} is not in the biorbd model")
 
 def segment_index(model, segment_name):
     """
@@ -72,7 +92,9 @@ def markers_to_array(model, q: np.ndarray) -> np.ndarray:
     return markers
 
 
-def extended_kalman_filter(model: biorbd.Model, trial: str, frames: slice = slice(None)) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def extended_kalman_filter(
+    model: biorbd.Model, trial: str, frames: slice = slice(None)
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Reconstruct the kinematics of the specified trial assuming a biorbd model is loaded using an Extended Kalman filter
 
@@ -102,7 +124,7 @@ def extended_kalman_filter(model: biorbd.Model, trial: str, frames: slice = slic
 
     index_in_c3d = np.array(tuple(labels.index(name) if name in labels else -1 for name in marker_names))
     markers_in_c3d = np.ndarray((3, len(index_in_c3d), n_frames)) * np.nan
-    markers_in_c3d[:, index_in_c3d >= 0, :] = data[:3, index_in_c3d[index_in_c3d >= 0], frames] / 1000  # To meter
+    markers_in_c3d[:, index_in_c3d[index_in_c3d >= 0], :] = data[:3, index_in_c3d[index_in_c3d >= 0], frames] / 1000  # To meter
 
     # Create a Kalman filter structure
     freq = c3d["parameters"]["POINT"]["RATE"]["value"][0]
@@ -206,8 +228,17 @@ class InverseKinematics:
     def __init__(
         self,
         model,
-        marker_data: np.array,
+        marker_data: np.ndarray,
     ):
+        """
+        Parameters
+        ----------
+        model: biorbd.Model
+            The biorbd model loaded with biorbd Eigen backend
+        marker_data: np.ndarray
+            The position of the markers from the c3d of shape (nb_dim, nb_marker, nb_frame),
+            nb_marker should be equal to the number of markers in the model, unit should be in meters.
+        """
         self.biorbd_model = model
         self.marker_names = [
             self.biorbd_model.markerNames()[i].to_string() for i in range(len(self.biorbd_model.markerNames()))
@@ -328,6 +359,8 @@ class InverseKinematics:
             raise ValueError('This method is not implemented please use "trf", "lm" or "only_lm" as argument')
 
         for f in range(self.nb_frames):
+            if f % 100 == 0:
+                print(f"Frame {f}/{self.nb_frames}")
             if initial_method != "lm":
                 x0 = (
                     np.array(
@@ -406,4 +439,3 @@ class InverseKinematics:
         )
 
         return self.output
-

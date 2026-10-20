@@ -24,6 +24,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+_skbuild
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -101,9 +102,6 @@ Pipfile.lock
 
 # mypy
 .mypy_cache/
-
-# Visual code
-.vscode
 
 # Visual studio
 .vs

@@ -7,6 +7,7 @@ set(SRC_LIST_MODULE
     "${CMAKE_CURRENT_SOURCE_DIR}/SegmentCharacteristics.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Contacts.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ExternalForceSet.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SoftContacts.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SoftContactNode.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/SoftContactSphere.cpp"
@@ -47,14 +48,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "_debug")
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_SOURCE_DIR}/include"
     "${BIORBD_BINARY_DIR}/include"
-    "${RBDL_INCLUDE_DIR}"
-    "${MATH_BACKEND_INCLUDE_DIR}"
+    "${INSTALL_DEPENDENCIES_PREFIX}/include"
 )
 
 # Add the dependencies for insuring build order
 target_link_libraries(${PROJECT_NAME}
-    "${RBDL_LIBRARY}"
-    "${MATH_BACKEND_LIBRARIES}"
+    RBDL::RBDL
+    ${MATH_BACKEND_LIBRARIES}
     "${BIORBD_NAME}_utils"
 )
 add_dependencies(${PROJECT_NAME} "${BIORBD_NAME}_utils")
